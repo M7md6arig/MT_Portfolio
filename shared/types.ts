@@ -5,6 +5,14 @@
 
 export type ProjectCategory = "poster" | "video" | "motion" | "website";
 
+export interface ProjectImage {
+  id: string;
+  projectId: string;
+  url: string;
+  order: number;
+  createdAt: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -16,6 +24,8 @@ export interface Project {
   tags: string[];
   order: number;
   createdAt: string;
+  /** Gallery images; optional so client placeholder data stays valid (phase 2 wires the UI). */
+  images?: ProjectImage[];
 }
 
 export interface Service {

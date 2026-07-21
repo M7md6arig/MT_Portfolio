@@ -16,4 +16,5 @@ export const env = {
   jwtSecret: required("JWT_SECRET", "dev-only-secret-change-in-production"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   clientOrigin: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",
+  cloudinaryUrl: required("CLOUDINARY_URL"),
 } as const;

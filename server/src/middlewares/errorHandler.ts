@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
+import { MulterError } from "multer";
 import { ZodError } from "zod";
 
 export class HttpError extends Error {
@@ -24,6 +25,13 @@ export function errorHandler(
 ): void {
   if (err instanceof ZodError) {
     res.status(400).json({ error: "Validation failed", details: err.flatten().fieldErrors });
+    return;
+  }
+
+  if (err instanceof MulterError) {
+    const message =
+      err.code === "LIMIT_FILE_SIZE" ? "Image too large — maximum size is 5MB" : err.message;
+    res.status(400).json({ error: message });
     return;
   }
 

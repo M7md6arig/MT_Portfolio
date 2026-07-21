@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler";
 import { HttpError } from "../middlewares/errorHandler";
+import * as imageService from "../services/image.service";
 import * as projectService from "../services/project.service";
 import {
   createProjectSchema,
@@ -36,5 +37,25 @@ export const updateProject = asyncHandler(async (req: Request, res: Response) =>
 
 export const deleteProject = asyncHandler(async (req: Request, res: Response) => {
   await projectService.deleteProject(req.params.id);
+  res.status(204).send();
+});
+
+export const uploadProjectImage = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) {
+    throw new HttpError(400, 'Missing image file (multipart field "image")');
+  }
+  const project = await projectService.getProjectById(req.params.id);
+  if (!project) {
+    throw new HttpError(404, "Project not found");
+  }
+  const image = await imageService.addProjectImage(req.params.id, req.file.buffer);
+  res.status(201).json({ data: image });
+});
+
+export const deleteProjectImage = asyncHandler(async (req: Request, res: Response) => {
+  const { count } = await imageService.deleteProjectImage(req.params.projectId, req.params.imageId);
+  if (count === 0) {
+    throw new HttpError(404, "Image not found");
+  }
   res.status(204).send();
 });
