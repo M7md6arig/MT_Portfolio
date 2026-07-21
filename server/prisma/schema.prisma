@@ -53,6 +53,15 @@ model SocialLink {
   order    Int    @default(0)
 }
 
+// Single-row table (id is always "main") holding site-wide theme settings.
+model SiteSettings {
+  id             String   @id @default("main")
+  primaryColor   String   @default("#0b0b10")
+  secondaryColor String   @default("#12141d")
+  accentColor    String   @default("#e0b15c")
+  updatedAt      DateTime @updatedAt
+}
+
 model Message {
   id        String   @id @default(cuid())
   name      String
