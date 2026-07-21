@@ -1,7 +1,10 @@
 # Build context is the repo root (see docker-compose.yml) so /shared is available.
 
 # ---- Stage 1: builder ----
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
+
+# Prisma engines need OpenSSL; slim images don't ship the openssl binary.
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/server
 
@@ -18,7 +21,9 @@ COPY server ./
 RUN npm run build
 
 # ---- Stage 2: runner ----
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
+
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/server
 ENV NODE_ENV=production
