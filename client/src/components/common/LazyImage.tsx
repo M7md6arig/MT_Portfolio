@@ -7,13 +7,15 @@ interface LazyImageProps {
   className?: string;
   /** Tailwind gradient stops for the placeholder / fallback layer */
   fallbackClassName?: string;
+  /** "cover" crops to fill (default); "contain" letterboxes so nothing is cropped */
+  fit?: "cover" | "contain";
 }
 
 /**
  * Lazy image with a blur-up placeholder.
  * With no src (or a failed load) it keeps the gradient layer — the site never shows a broken image.
  */
-export function LazyImage({ src, alt, className, fallbackClassName }: LazyImageProps) {
+export function LazyImage({ src, alt, className, fallbackClassName, fit = "cover" }: LazyImageProps) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -37,7 +39,8 @@ export function LazyImage({ src, alt, className, fallbackClassName }: LazyImageP
           onLoad={() => setLoaded(true)}
           onError={() => setFailed(true)}
           className={cn(
-            "h-full w-full object-cover transition-[opacity,filter] duration-700",
+            "h-full w-full transition-[opacity,filter] duration-700",
+            fit === "contain" ? "object-contain" : "object-cover",
             loaded ? "opacity-100 blur-0" : "opacity-0 blur-md",
           )}
         />

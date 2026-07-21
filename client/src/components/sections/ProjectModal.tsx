@@ -30,6 +30,24 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
   const gallery = project?.images ?? [];
   const mainImage = gallery[activeImage]?.url ?? project?.thumbnailUrl ?? null;
 
+  function navigate(delta: number) {
+    if (gallery.length < 2) return;
+    setActiveImage((i) => (i + delta + gallery.length) % gallery.length);
+    setPlaying(false);
+  }
+
+  // Arrow-key navigation while the dialog is open (Escape is handled by Modal itself).
+  useEffect(() => {
+    if (!project || gallery.length < 2) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowRight") navigate(1);
+      if (event.key === "ArrowLeft") navigate(-1);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.id, gallery.length]);
+
   return (
     <Modal open={project !== null} onClose={onClose} label={project?.title ?? "Project details"}>
       {project && (
@@ -44,13 +62,44 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
               />
             ) : (
               <>
-                <LazyImage
-                  key={mainImage ?? "fallback"}
-                  src={mainImage}
-                  alt={project.title}
-                  className="aspect-video w-full"
-                  fallbackClassName={CATEGORY_GRADIENTS[project.category]}
-                />
+                {/* night backdrop letterboxes portrait/landscape images shown uncropped */}
+                <div className="bg-night">
+                  <LazyImage
+                    key={mainImage ?? "fallback"}
+                    src={mainImage}
+                    alt={project.title}
+                    fit="contain"
+                    className="aspect-video w-full"
+                    fallbackClassName={CATEGORY_GRADIENTS[project.category]}
+                  />
+                </div>
+
+                {gallery.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => navigate(-1)}
+                      aria-label="Previous image"
+                      className="glass absolute left-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full text-white transition-colors hover:text-accent"
+                    >
+                      <svg width="9" height="16" viewBox="0 0 9 16" fill="none" aria-hidden="true">
+                        <path d="M8 1L1 8l7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => navigate(1)}
+                      aria-label="Next image"
+                      className="glass absolute right-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full text-white transition-colors hover:text-accent"
+                    >
+                      <svg width="9" height="16" viewBox="0 0 9 16" fill="none" aria-hidden="true">
+                        <path d="M1 1l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                    <span className="absolute bottom-3 right-3 z-10 rounded-full bg-black/60 px-2.5 py-1 text-xs text-neutral-300">
+                      {activeImage + 1} / {gallery.length}
+                    </span>
+                  </>
+                )}
+
                 {isPlayable && (
                   <button
                     onClick={() => setPlaying(true)}
