@@ -23,6 +23,7 @@ export interface Service {
   title: string;
   description: string;
   icon: string;
+  order: number;
 }
 
 export interface SocialLink {
@@ -30,7 +31,20 @@ export interface SocialLink {
   platform: string;
   url: string;
   icon: string;
+  order: number;
 }
+
+export interface SiteSettings {
+  id: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+}
+
+export type ProjectPayload = Omit<Project, "id" | "createdAt">;
+export type ServicePayload = Omit<Service, "id">;
+export type SocialLinkPayload = Omit<SocialLink, "id">;
+export type SettingsPayload = Partial<Omit<SiteSettings, "id">>;
 
 export interface ContactPayload {
   name: string;

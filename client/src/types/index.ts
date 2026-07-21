@@ -6,8 +6,13 @@ export type {
   ContactPayload,
   Project,
   ProjectCategory,
+  ProjectPayload,
   Service,
+  ServicePayload,
+  SettingsPayload,
+  SiteSettings,
   SocialLink,
+  SocialLinkPayload,
 } from "@shared/types";
 
 /** A floating work card in the Hero / Closing scenes */

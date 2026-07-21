@@ -10,13 +10,28 @@ import type {
   ContactPayload,
   Project,
   ProjectCategory,
+  ProjectPayload,
   Service,
+  ServicePayload,
+  SettingsPayload,
+  SiteSettings,
   SocialLink,
+  SocialLinkPayload,
 } from "@/types";
+
+export const TOKEN_STORAGE_KEY = "mt_admin_token";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:4000/api",
   timeout: 8000,
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 /** Read endpoints degrade gracefully: if the API is down, placeholder data keeps the site alive. */
@@ -66,4 +81,78 @@ export async function sendContactMessage(payload: ContactPayload): Promise<void>
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const res = await api.post<ApiResponse<AuthResponse>>("/auth/login", { email, password });
   return res.data.data;
+}
+
+export function fetchSettings(): Promise<SiteSettings> {
+  return withFallback(
+    async () => (await api.get<ApiResponse<SiteSettings>>("/settings")).data.data,
+    { id: "main", primaryColor: "#0b0b10", secondaryColor: "#12141d", accentColor: "#e0b15c" },
+    "fetchSettings",
+  );
+}
+
+/*
+ * Admin API — no placeholder fallback: the dashboard must surface real errors,
+ * not silently show fake data.
+ */
+
+export async function adminListProjects(): Promise<Project[]> {
+  return (await api.get<ApiResponse<Project[]>>("/projects")).data.data;
+}
+
+export async function adminCreateProject(payload: ProjectPayload): Promise<Project> {
+  return (await api.post<ApiResponse<Project>>("/projects", payload)).data.data;
+}
+
+export async function adminUpdateProject(
+  id: string,
+  payload: Partial<ProjectPayload>,
+): Promise<Project> {
+  return (await api.put<ApiResponse<Project>>(`/projects/${id}`, payload)).data.data;
+}
+
+export async function adminDeleteProject(id: string): Promise<void> {
+  await api.delete(`/projects/${id}`);
+}
+
+export async function adminListServices(): Promise<Service[]> {
+  return (await api.get<ApiResponse<Service[]>>("/services")).data.data;
+}
+
+export async function adminCreateService(payload: ServicePayload): Promise<Service> {
+  return (await api.post<ApiResponse<Service>>("/services", payload)).data.data;
+}
+
+export async function adminUpdateService(
+  id: string,
+  payload: Partial<ServicePayload>,
+): Promise<Service> {
+  return (await api.patch<ApiResponse<Service>>(`/services/${id}`, payload)).data.data;
+}
+
+export async function adminDeleteService(id: string): Promise<void> {
+  await api.delete(`/services/${id}`);
+}
+
+export async function adminListSocialLinks(): Promise<SocialLink[]> {
+  return (await api.get<ApiResponse<SocialLink[]>>("/social-links")).data.data;
+}
+
+export async function adminCreateSocialLink(payload: SocialLinkPayload): Promise<SocialLink> {
+  return (await api.post<ApiResponse<SocialLink>>("/social-links", payload)).data.data;
+}
+
+export async function adminUpdateSocialLink(
+  id: string,
+  payload: Partial<SocialLinkPayload>,
+): Promise<SocialLink> {
+  return (await api.patch<ApiResponse<SocialLink>>(`/social-links/${id}`, payload)).data.data;
+}
+
+export async function adminDeleteSocialLink(id: string): Promise<void> {
+  await api.delete(`/social-links/${id}`);
+}
+
+export async function adminUpdateSettings(payload: SettingsPayload): Promise<SiteSettings> {
+  return (await api.patch<ApiResponse<SiteSettings>>("/settings", payload)).data.data;
 }

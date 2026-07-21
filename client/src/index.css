@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Default palette as RGB triplets — overridden at runtime by utils/theme.ts
+   with the colors saved in the admin Appearance tab. */
+:root {
+  --color-primary: 11 11 16; /* #0b0b10 night */
+  --color-secondary: 18 20 29; /* #12141d world */
+  --color-accent: 224 177 92; /* #e0b15c */
+  --color-accent-soft: 240 205 138; /* #f0cd8a */
+}
+
 @layer components {
   /* iOS-style frosted glass, layered OVER the dark identity (never replacing it).
      One source of truth — every glass surface on the site uses these two classes. */

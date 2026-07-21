@@ -317,30 +317,34 @@ export const PLACEHOLDER_SERVICES: Service[] = [
     title: "Poster & Key Art Design",
     description: "Cinematic posters and campaign key art that set the tone in a single frame.",
     icon: "poster",
+    order: 0,
   },
   {
     id: "ph-svc-2",
     title: "Motion Graphics",
     description: "Idents, kinetic type and animated stories that move with purpose.",
     icon: "motion",
+    order: 1,
   },
   {
     id: "ph-svc-3",
     title: "UI/UX Design",
     description: "Interfaces designed like scenes: clear focus, deliberate rhythm, zero noise.",
     icon: "uiux",
+    order: 2,
   },
   {
     id: "ph-svc-4",
     title: "Websites & Landing Pages",
     description: "Fast, expressive websites built with React — from concept to deployment.",
     icon: "web",
+    order: 3,
   },
 ];
 
 export const PLACEHOLDER_SOCIAL_LINKS: SocialLink[] = [
-  { id: "ph-soc-1", platform: "Behance", url: "https://behance.net/your-handle", icon: "behance" },
-  { id: "ph-soc-2", platform: "Instagram", url: "https://instagram.com/your-handle", icon: "instagram" },
-  { id: "ph-soc-3", platform: "LinkedIn", url: "https://linkedin.com/in/your-handle", icon: "linkedin" },
-  { id: "ph-soc-4", platform: "YouTube", url: "https://youtube.com/@your-handle", icon: "youtube" },
+  { id: "ph-soc-1", platform: "Behance", url: "https://behance.net/your-handle", icon: "behance", order: 0 },
+  { id: "ph-soc-2", platform: "Instagram", url: "https://instagram.com/your-handle", icon: "instagram", order: 1 },
+  { id: "ph-soc-3", platform: "LinkedIn", url: "https://linkedin.com/in/your-handle", icon: "linkedin", order: 2 },
+  { id: "ph-soc-4", platform: "YouTube", url: "https://youtube.com/@your-handle", icon: "youtube", order: 3 },
 ];
