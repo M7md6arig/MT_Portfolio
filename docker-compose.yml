@@ -33,7 +33,8 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
     ports:
       - "4000:4000"
-    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm run dev"
+    # The production image has no tsx/src, so dev and seed commands can't run here.
+    command: sh -c "npx prisma migrate deploy && npm start"
 
   client:
     build:

@@ -1,16 +1,35 @@
 # Build context is the repo root (see docker-compose.yml) so /shared is available.
-FROM node:20-alpine
+
+# ---- Stage 1: builder ----
+FROM node:20-alpine AS builder
 
 WORKDIR /app/server
 
+# tsconfig.json includes ../shared, so it must exist before the build.
 COPY shared /app/shared
-# prisma/ must be present before npm install: the postinstall hook runs `prisma generate`,
-# which needs schema.prisma.
+
+# prisma/ must be present before npm install: the postinstall hook runs
+# `prisma generate`, and the build needs the generated client types.
 COPY server/package*.json ./
 COPY server/prisma ./prisma
-RUN npm install
+RUN npm ci
 
 COPY server ./
+RUN npm run build
+
+# ---- Stage 2: runner ----
+FROM node:20-alpine AS runner
+
+WORKDIR /app/server
+ENV NODE_ENV=production
+
+# Production-only install; postinstall regenerates the Prisma client here.
+# prisma/ is kept in the image so `npx prisma migrate deploy` works at runtime.
+COPY server/package*.json ./
+COPY server/prisma ./prisma
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/server/dist ./dist
 
 EXPOSE 4000
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]

@@ -1,0 +1,6 @@
+# Applies to builds whose context is the repo root (server/ and client/ Dockerfiles).
+**/node_modules
+**/dist
+**/.env
+**/*.log
+.git
