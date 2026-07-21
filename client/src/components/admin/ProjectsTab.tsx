@@ -7,8 +7,9 @@ import {
   adminListProjects,
   adminUpdateProject,
 } from "@/services/api";
-import type { Project, ProjectCategory, ProjectPayload } from "@/types";
+import type { Project, ProjectCategory, ProjectImage, ProjectPayload } from "@/types";
 import { adminInput, ErrorBanner, Field, RowActions } from "./adminUi";
+import { GalleryUploader } from "./GalleryUploader";
 
 const CATEGORIES: ProjectCategory[] = ["poster", "video", "motion", "website"];
 
@@ -29,6 +30,7 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Project | "new" | null>(null);
   const [form, setForm] = useState<ProjectPayload>(emptyForm);
+  const [images, setImages] = useState<ProjectImage[]>([]);
   const [saving, setSaving] = useState(false);
 
   async function reload() {
@@ -51,10 +53,12 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
 
   function openNew() {
     setForm(emptyForm);
+    setImages([]);
     setEditing("new");
   }
 
   function openEdit(project: Project) {
+    setImages(project.images ?? []);
     setForm({
       title: project.title,
       description: project.description,
@@ -79,17 +83,34 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
     };
     try {
       if (editing === "new") {
-        await adminCreateProject(payload);
+        // Keep the modal open in edit mode so gallery images can be uploaded right away.
+        const created = await adminCreateProject(payload);
+        setEditing(created);
+        setImages([]);
+        await reload();
       } else if (editing) {
         await adminUpdateProject(editing.id, payload);
+        setEditing(null);
+        await reload();
       }
-      setEditing(null);
-      await reload();
     } catch (err) {
       onAuthError(err);
       setError("Save failed — check the fields (URLs must be valid).");
     } finally {
       setSaving(false);
+    }
+  }
+
+  /** Persist a thumbnail choice immediately — no extra Save click needed. */
+  async function useAsThumbnail(url: string) {
+    setForm((f) => ({ ...f, thumbnailUrl: url }));
+    if (editing !== "new" && editing) {
+      try {
+        await adminUpdateProject(editing.id, { thumbnailUrl: url });
+      } catch (err) {
+        onAuthError(err);
+        setError("Updating the thumbnail failed.");
+      }
     }
   }
 
@@ -193,7 +214,23 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
             />
           </Field>
 
-          <Field label="Thumbnail URL">
+          <Field label="Gallery">
+            {editing !== "new" && editing !== null ? (
+              <GalleryUploader
+                projectId={editing.id}
+                images={images}
+                onChange={setImages}
+                thumbnailUrl={form.thumbnailUrl}
+                onUseAsThumbnail={(url) => void useAsThumbnail(url)}
+              />
+            ) : (
+              <p className="rounded-xl border border-dashed border-line px-4 py-4 text-xs text-neutral-500">
+                Save the project first — the photo uploader opens right here afterwards.
+              </p>
+            )}
+          </Field>
+
+          <Field label="Thumbnail URL (auto-filled from the gallery)">
             <input
               required
               type="url"

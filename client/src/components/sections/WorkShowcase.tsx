@@ -9,6 +9,7 @@ import { CATEGORY_GRADIENTS, WORK_TABS } from "@/data/constants";
 import { fetchProjects } from "@/services/api";
 import type { Project, ProjectCategory } from "@/types";
 import { cn } from "@/utils/cn";
+import { coverUrl } from "@/utils/project";
 
 export function WorkShowcase() {
   const [projects, setProjects] = useState<Project[] | null>(null);
@@ -86,7 +87,7 @@ export function WorkShowcase() {
                     {/* thin glass frame around the artwork */}
                     <div className="relative overflow-hidden rounded-xl">
                       <LazyImage
-                        src={project.thumbnailUrl || null}
+                        src={coverUrl(project)}
                         alt={project.title}
                         className="aspect-[4/3] w-full"
                         fallbackClassName={CATEGORY_GRADIENTS[project.category]}

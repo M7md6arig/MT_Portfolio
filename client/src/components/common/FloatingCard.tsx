@@ -11,6 +11,8 @@ interface FloatingCardProps {
   mode?: "exit" | "enter";
   /** Reverse the orbit direction — the Closing scene mirrors the Hero. */
   mirror?: boolean;
+  /** Real project artwork shown inside the card; without it the card stays plain glass. */
+  imageUrl?: string | null;
 }
 
 const ASPECT: Record<HeroCardData["aspect"], string> = {
@@ -46,7 +48,13 @@ const ENTER_SETTLE_AT = 0.3;
 
 const toRadians = (deg: number) => (deg * Math.PI) / 180;
 
-export function FloatingCard({ card, progress, mode = "exit", mirror = false }: FloatingCardProps) {
+export function FloatingCard({
+  card,
+  progress,
+  mode = "exit",
+  mirror = false,
+  imageUrl = null,
+}: FloatingCardProps) {
   // Orbital parallax: nearer cards sweep a wider angle per scroll unit, so they read as faster.
   const sweep = (mirror ? -1 : 1) * (70 + card.depth * 50);
   const restingOpacity = 0.3 + card.depth * 0.45;
@@ -106,9 +114,27 @@ export function FloatingCard({ card, progress, mode = "exit", mirror = false }: 
       className="absolute hidden sm:block"
       aria-hidden="true"
     >
-      <div className={cn("glass overflow-hidden rounded-lg", ASPECT[card.aspect])}>
-        <div className="flex h-full flex-col justify-end p-2.5">
-          <span className="text-[9px] font-medium leading-snug tracking-wide text-white/40">
+      <div className={cn("glass relative overflow-hidden rounded-lg", ASPECT[card.aspect])}>
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover opacity-80"
+          />
+        )}
+        <div
+          className={cn(
+            "relative flex h-full flex-col justify-end p-2.5",
+            imageUrl && "bg-gradient-to-t from-black/60 to-transparent",
+          )}
+        >
+          <span
+            className={cn(
+              "text-[9px] font-medium leading-snug tracking-wide",
+              imageUrl ? "text-white/80" : "text-white/40",
+            )}
+          >
             {card.title}
           </span>
         </div>

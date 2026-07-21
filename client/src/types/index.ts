@@ -6,6 +6,7 @@ export type {
   ContactPayload,
   Project,
   ProjectCategory,
+  ProjectImage,
   ProjectPayload,
   Service,
   ServicePayload,

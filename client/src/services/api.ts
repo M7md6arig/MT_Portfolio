@@ -10,6 +10,7 @@ import type {
   ContactPayload,
   Project,
   ProjectCategory,
+  ProjectImage,
   ProjectPayload,
   Service,
   ServicePayload,
@@ -113,6 +114,22 @@ export async function adminUpdateProject(
 
 export async function adminDeleteProject(id: string): Promise<void> {
   await api.delete(`/projects/${id}`);
+}
+
+export async function adminUploadProjectImage(
+  projectId: string,
+  file: File,
+): Promise<ProjectImage> {
+  const form = new FormData();
+  form.append("image", file);
+  const res = await api.post<ApiResponse<ProjectImage>>(`/projects/${projectId}/images`, form, {
+    timeout: 30000, // uploads need more headroom than the default 8s
+  });
+  return res.data.data;
+}
+
+export async function adminDeleteProjectImage(projectId: string, imageId: string): Promise<void> {
+  await api.delete(`/projects/${projectId}/images/${imageId}`);
 }
 
 export async function adminListServices(): Promise<Service[]> {

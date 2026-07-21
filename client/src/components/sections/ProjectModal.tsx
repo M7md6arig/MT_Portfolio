@@ -5,6 +5,7 @@ import { Modal } from "@/components/common/Modal";
 import { Tag } from "@/components/common/Tag";
 import { CATEGORY_GRADIENTS, CATEGORY_LABELS } from "@/data/constants";
 import type { Project } from "@/types";
+import { cn } from "@/utils/cn";
 
 interface ProjectModalProps {
   project: Project | null;
@@ -14,15 +15,20 @@ interface ProjectModalProps {
 /** Project detail dialog. Videos show a thumbnail first and only load the player on demand. */
 export function ProjectModal({ project, onClose }: ProjectModalProps) {
   const [playing, setPlaying] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
     setPlaying(false);
+    setActiveImage(0);
   }, [project?.id]);
 
   const isPlayable =
     project !== null &&
     (project.category === "video" || project.category === "motion") &&
     Boolean(project.mediaUrl);
+
+  const gallery = project?.images ?? [];
+  const mainImage = gallery[activeImage]?.url ?? project?.thumbnailUrl ?? null;
 
   return (
     <Modal open={project !== null} onClose={onClose} label={project?.title ?? "Project details"}>
@@ -39,7 +45,8 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
             ) : (
               <>
                 <LazyImage
-                  src={project.thumbnailUrl || null}
+                  key={mainImage ?? "fallback"}
+                  src={mainImage}
                   alt={project.title}
                   className="aspect-video w-full"
                   fallbackClassName={CATEGORY_GRADIENTS[project.category]}
@@ -60,6 +67,31 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
               </>
             )}
           </div>
+
+          {/* gallery strip — only when the project has more than one image */}
+          {gallery.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto border-b border-line px-6 py-3 sm:px-8">
+              {gallery.map((image, index) => (
+                <button
+                  key={image.id}
+                  onClick={() => {
+                    setActiveImage(index);
+                    setPlaying(false);
+                  }}
+                  aria-label={`Image ${index + 1} of ${gallery.length}`}
+                  aria-current={index === activeImage}
+                  className={cn(
+                    "h-14 w-20 shrink-0 overflow-hidden rounded-lg border transition-colors",
+                    index === activeImage
+                      ? "border-accent"
+                      : "border-line opacity-60 hover:opacity-100",
+                  )}
+                >
+                  <img src={image.url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="p-6 sm:p-8">
             <span className="text-xs uppercase tracking-[0.25em] text-accent">
