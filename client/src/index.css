@@ -11,6 +11,16 @@
   --color-accent-soft: 240 205 138; /* #f0cd8a */
 }
 
+@layer utilities {
+  /* One legibility treatment for every text sitting on the hero/closing stage
+     (title, subtitle, scroll hint, floating-card labels). */
+  .text-scene-shadow {
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.65),
+      0 3px 16px rgba(0, 0, 0, 0.5);
+  }
+}
+
 @layer components {
   /* iOS-style frosted glass, layered OVER the dark identity (never replacing it).
      One source of truth — every glass surface on the site uses these two classes. */

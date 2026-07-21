@@ -66,9 +66,11 @@ export function Closing() {
           <span className="text-xs uppercase tracking-[0.3em] text-accent">
             {CLOSING_COPY.eyebrow}
           </span>
-          <h2 className="font-display text-3xl font-bold sm:text-4xl">{CLOSING_COPY.title}</h2>
-          <p className="max-w-md text-sm text-neutral-400">{CLOSING_COPY.text}</p>
-          <Button href="#contact" variant="ghost" className="mt-2">
+          <h2 className="text-scene-shadow font-display text-3xl font-bold text-white sm:text-4xl">
+            {CLOSING_COPY.title}
+          </h2>
+          <p className="text-scene-shadow max-w-md text-sm text-neutral-200">{CLOSING_COPY.text}</p>
+          <Button href="#contact" variant="glass" className="mt-2">
             {CLOSING_COPY.cta}
           </Button>
         </motion.div>

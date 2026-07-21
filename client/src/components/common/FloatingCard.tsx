@@ -138,8 +138,8 @@ export function FloatingCard({
         >
           <span
             className={cn(
-              "text-[9px] font-medium leading-snug tracking-wide",
-              imageUrl ? "text-white/80" : "text-white/40",
+              "text-scene-shadow text-[9px] font-medium leading-snug tracking-wide",
+              imageUrl ? "text-white" : "text-white/40",
             )}
           >
             {card.title}
