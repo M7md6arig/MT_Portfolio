@@ -12,7 +12,7 @@ import {
   adminUpdateSocialLink,
 } from "@/services/api";
 import type { Service, ServicePayload, SocialLink, SocialLinkPayload } from "@/types";
-import { adminInput, ErrorBanner, Field, RowActions } from "./adminUi";
+import { adminInput, ErrorBanner, Field, FlashNote, RowActions, useFlash } from "./adminUi";
 
 const emptyService: ServicePayload = { title: "", description: "", icon: "", order: 0 };
 const emptyLink: SocialLinkPayload = { platform: "", url: "", icon: "", order: 0 };
@@ -23,6 +23,7 @@ export function ContentTab({ onAuthError }: { onAuthError: (err: unknown) => voi
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [flashMessage, flash] = useFlash();
 
   const [editingService, setEditingService] = useState<Service | "new" | null>(null);
   const [serviceForm, setServiceForm] = useState<ServicePayload>(emptyService);
@@ -60,6 +61,7 @@ export function ContentTab({ onAuthError }: { onAuthError: (err: unknown) => voi
         await adminUpdateService(editingService.id, serviceForm);
       }
       setEditingService(null);
+      flash("Service saved ✓");
       await reload();
     } catch (err) {
       onAuthError(err);
@@ -80,6 +82,7 @@ export function ContentTab({ onAuthError }: { onAuthError: (err: unknown) => voi
         await adminUpdateSocialLink(editingLink.id, linkForm);
       }
       setEditingLink(null);
+      flash("Link saved ✓");
       await reload();
     } catch (err) {
       onAuthError(err);
@@ -93,6 +96,7 @@ export function ContentTab({ onAuthError }: { onAuthError: (err: unknown) => voi
     if (!window.confirm(`Delete service "${service.title}"?`)) return;
     try {
       await adminDeleteService(service.id);
+      flash("Service deleted ✓");
       await reload();
     } catch (err) {
       onAuthError(err);
@@ -104,6 +108,7 @@ export function ContentTab({ onAuthError }: { onAuthError: (err: unknown) => voi
     if (!window.confirm(`Delete social link "${link.platform}"?`)) return;
     try {
       await adminDeleteSocialLink(link.id);
+      flash("Link deleted ✓");
       await reload();
     } catch (err) {
       onAuthError(err);
@@ -115,7 +120,10 @@ export function ContentTab({ onAuthError }: { onAuthError: (err: unknown) => voi
 
   return (
     <div className="space-y-10">
-      <ErrorBanner message={error} />
+      <div className="flex items-center justify-between">
+        <ErrorBanner message={error} />
+        <FlashNote message={flashMessage} />
+      </div>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">

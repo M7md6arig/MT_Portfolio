@@ -8,7 +8,7 @@ import {
   adminUpdateProject,
 } from "@/services/api";
 import type { Project, ProjectCategory, ProjectImage, ProjectPayload } from "@/types";
-import { adminInput, ErrorBanner, Field, RowActions } from "./adminUi";
+import { adminInput, ErrorBanner, Field, FlashNote, RowActions, useFlash } from "./adminUi";
 import { GalleryUploader } from "./GalleryUploader";
 
 const CATEGORIES: ProjectCategory[] = ["poster", "video", "motion", "website"];
@@ -32,6 +32,7 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
   const [form, setForm] = useState<ProjectPayload>(emptyForm);
   const [images, setImages] = useState<ProjectImage[]>([]);
   const [saving, setSaving] = useState(false);
+  const [flashMessage, flash] = useFlash();
 
   async function reload() {
     setLoading(true);
@@ -87,10 +88,12 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
         const created = await adminCreateProject(payload);
         setEditing(created);
         setImages([]);
+        flash("Project created ✓ — add gallery photos below");
         await reload();
       } else if (editing) {
         await adminUpdateProject(editing.id, payload);
         setEditing(null);
+        flash("Saved ✓");
         await reload();
       }
     } catch (err) {
@@ -119,6 +122,7 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
     setError(null);
     try {
       await adminDeleteProject(project.id);
+      flash("Deleted ✓");
       await reload();
     } catch (err) {
       onAuthError(err);
@@ -132,9 +136,12 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
         <h2 className="font-display text-lg font-semibold text-white">
           Projects <span className="text-sm text-neutral-500">({projects.length})</span>
         </h2>
-        <Button onClick={openNew} className="px-5 py-2 text-xs">
-          + Add project
-        </Button>
+        <div className="flex items-center gap-4">
+          <FlashNote message={flashMessage} />
+          <Button onClick={openNew} className="px-5 py-2 text-xs">
+            + Add project
+          </Button>
+        </div>
       </div>
 
       <ErrorBanner message={error} />
@@ -174,9 +181,12 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
         label={editing === "new" ? "Add project" : "Edit project"}
       >
         <form onSubmit={onSubmit} className="space-y-4 p-8">
-          <h3 className="font-display text-lg font-semibold text-white">
-            {editing === "new" ? "Add project" : "Edit project"}
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-display text-lg font-semibold text-white">
+              {editing === "new" ? "Add project" : "Edit project"}
+            </h3>
+            <FlashNote message={flashMessage} />
+          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Title">
