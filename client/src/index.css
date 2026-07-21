@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* iOS-style frosted glass, layered OVER the dark identity (never replacing it).
+     One source of truth — every glass surface on the site uses these two classes. */
+  .glass {
+    @apply border border-white/10 bg-white/5 shadow-glass backdrop-blur-md;
+  }
+  .glass-strong {
+    @apply border border-white/10 bg-white/10 shadow-glass backdrop-blur-lg;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-night font-body text-neutral-100 antialiased;
+}
+
+::selection {
+  @apply bg-accent/30 text-white;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0b10;
+}
+::-webkit-scrollbar-thumb {
+  background: #26272f;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #34353f;
+}
