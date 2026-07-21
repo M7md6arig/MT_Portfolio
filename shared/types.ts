@@ -44,6 +44,18 @@ export interface SocialLink {
   order: number;
 }
 
+/** A "trusted by" client card managed from the dashboard. */
+export interface Client {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  backgroundUrl: string | null;
+  order: number;
+  createdAt: string;
+}
+
+export type ClientPayload = Pick<Client, "name" | "order">;
+
 export interface SiteSettings {
   id: string;
   primaryColor: string;

@@ -65,6 +65,16 @@ model SocialLink {
   order    Int    @default(0)
 }
 
+// A "trusted by" client card: dark card showing the logo, pattern background on hover.
+model Client {
+  id            String   @id @default(cuid())
+  name          String
+  logoUrl       String?
+  backgroundUrl String?
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+}
+
 // Single-row table (id is always "main") holding site-wide theme settings.
 model SiteSettings {
   id             String   @id @default("main")
