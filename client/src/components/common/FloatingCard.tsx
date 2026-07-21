@@ -57,7 +57,11 @@ export function FloatingCard({
 }: FloatingCardProps) {
   // Orbital parallax: nearer cards sweep a wider angle per scroll unit, so they read as faster.
   const sweep = (mirror ? -1 : 1) * (70 + card.depth * 50);
-  const restingOpacity = 0.3 + card.depth * 0.45;
+  // Foreground cards (the ones layered in front of the portrait, depth ≥ 0.6) are fully
+  // opaque so they never blend into the backdrop; depth cards keep their translucency
+  // — that fade IS the parallax depth cue.
+  const isForeground = card.depth >= 0.6;
+  const restingOpacity = isForeground ? 1 : 0.3 + card.depth * 0.45;
 
   // Scroll drives the card's POLAR coordinates around the portrait's axis: the resting
   // angle gains a growing offset while the radius expands, so the card revolves around
@@ -120,7 +124,10 @@ export function FloatingCard({
             src={imageUrl}
             alt=""
             loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover opacity-80"
+            className={cn(
+              "absolute inset-0 h-full w-full object-cover",
+              isForeground ? "opacity-100" : "opacity-80",
+            )}
           />
         )}
         <div
