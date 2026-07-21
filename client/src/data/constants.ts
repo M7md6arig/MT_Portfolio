@@ -344,7 +344,9 @@ export const PLACEHOLDER_SERVICES: Service[] = [
 
 export const PLACEHOLDER_SOCIAL_LINKS: SocialLink[] = [
   { id: "ph-soc-1", platform: "Behance", url: "https://behance.net/your-handle", icon: "behance", order: 0 },
-  { id: "ph-soc-2", platform: "Instagram", url: "https://instagram.com/your-handle", icon: "instagram", order: 1 },
-  { id: "ph-soc-3", platform: "LinkedIn", url: "https://linkedin.com/in/your-handle", icon: "linkedin", order: 2 },
-  { id: "ph-soc-4", platform: "YouTube", url: "https://youtube.com/@your-handle", icon: "youtube", order: 3 },
+  { id: "ph-soc-2", platform: "X", url: "https://x.com/your-handle", icon: "x", order: 1 },
+  { id: "ph-soc-3", platform: "Facebook", url: "https://facebook.com/your-handle", icon: "facebook", order: 2 },
+  { id: "ph-soc-4", platform: "Instagram", url: "https://instagram.com/your-handle", icon: "instagram", order: 3 },
+  { id: "ph-soc-5", platform: "LinkedIn", url: "https://linkedin.com/in/your-handle", icon: "linkedin", order: 4 },
+  { id: "ph-soc-6", platform: "YouTube", url: "https://youtube.com/@your-handle", icon: "youtube", order: 5 },
 ];
