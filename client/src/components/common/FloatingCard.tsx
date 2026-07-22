@@ -1,4 +1,5 @@
 import { MotionValue, motion, useTransform } from "framer-motion";
+import { useState } from "react";
 import { ARC } from "@/data/constants";
 import type { HeroCardData } from "@/types";
 import { cn } from "@/utils/cn";
@@ -99,8 +100,12 @@ export function FloatingCard({
       : [0, restingOpacity * 0.6, restingOpacity],
   );
 
-  // A custom uploaded image dictates the card's aspect; otherwise the slot preset does.
-  const heightFactor = imageSize ? imageSize.height / imageSize.width : HEIGHT_FACTOR[card.aspect];
+  // Project covers carry no stored dimensions, so measure them as they load.
+  const [measuredSize, setMeasuredSize] = useState<{ width: number; height: number } | null>(null);
+
+  // Any known image size dictates the card's aspect; otherwise the slot preset does.
+  const size = imageSize ?? measuredSize;
+  const heightFactor = size ? size.height / size.width : HEIGHT_FACTOR[card.aspect];
   const width = Math.round(90 + card.depth * 90);
   const height = Math.round(width * heightFactor);
 
@@ -124,14 +129,20 @@ export function FloatingCard({
       aria-hidden="true"
     >
       <div
-        style={imageSize ? { aspectRatio: `${imageSize.width} / ${imageSize.height}` } : undefined}
-        className={cn("glass relative overflow-hidden rounded-lg", !imageSize && ASPECT[card.aspect])}
+        style={size ? { aspectRatio: `${size.width} / ${size.height}` } : undefined}
+        className={cn("glass relative overflow-hidden rounded-lg", !size && ASPECT[card.aspect])}
       >
         {imageUrl && (
           <img
             src={imageUrl}
             alt=""
             loading="lazy"
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (!imageSize && img.naturalWidth && img.naturalHeight) {
+                setMeasuredSize({ width: img.naturalWidth, height: img.naturalHeight });
+              }
+            }}
             className={cn(
               "absolute inset-0 h-full w-full object-cover",
               isForeground ? "opacity-100" : "opacity-80",
