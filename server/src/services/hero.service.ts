@@ -19,9 +19,16 @@ export async function listHeroCards() {
 }
 
 export function updateHeroCard(id: string, data: UpdateHeroCardInput) {
+  const update: Record<string, string | number | null> = {};
+  if ("title" in data) update.title = data.title ?? null;
+  if (data.clearImage) {
+    update.imageUrl = null;
+    update.imageWidth = null;
+    update.imageHeight = null;
+  }
   return prisma.heroCard.upsert({
     where: { id },
-    update: { title: data.title ?? null },
+    update,
     create: { id, title: data.title ?? null },
   });
 }

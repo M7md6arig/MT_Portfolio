@@ -103,6 +103,23 @@ function SlotEditor({
         onChange={onPickImage}
       />
 
+      {content?.imageUrl && (
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              onContentChange(await adminUpdateHeroCard(slotId, { clearImage: true }));
+              flash("Image removed ✓ — back to project cover");
+            } catch (err) {
+              onError(err, `Removing the image for ${slotId} failed.`);
+            }
+          }}
+          className="text-xs text-neutral-500 underline-offset-2 transition-colors hover:text-red-400 hover:underline"
+        >
+          Remove image (use project cover)
+        </button>
+      )}
+
       <Field label="Title">
         <div className="flex gap-2">
           <input

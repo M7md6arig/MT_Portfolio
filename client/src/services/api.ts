@@ -181,7 +181,7 @@ export async function adminDeleteSocialLink(id: string): Promise<void> {
 
 export async function adminUpdateHeroCard(
   id: string,
-  payload: { title: string | null },
+  payload: { title?: string | null; clearImage?: boolean },
 ): Promise<HeroCardContent> {
   return (await api.patch<ApiResponse<HeroCardContent>>(`/hero-cards/${id}`, payload)).data.data;
 }
