@@ -3,14 +3,16 @@ import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppearanceTab } from "@/components/admin/AppearanceTab";
 import { ContentTab } from "@/components/admin/ContentTab";
+import { HeroTab } from "@/components/admin/HeroTab";
 import { ProjectsTab } from "@/components/admin/ProjectsTab";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/utils/cn";
 
-type TabId = "projects" | "content" | "appearance";
+type TabId = "projects" | "hero" | "content" | "appearance";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "projects", label: "Projects" },
+  { id: "hero", label: "Hero Cards" },
   { id: "content", label: "Services & Links" },
   { id: "appearance", label: "Appearance" },
 ];
@@ -80,6 +82,7 @@ export default function AdminDashboard() {
         </nav>
 
         {tab === "projects" && <ProjectsTab onAuthError={onAuthError} />}
+        {tab === "hero" && <HeroTab onAuthError={onAuthError} />}
         {tab === "content" && <ContentTab onAuthError={onAuthError} />}
         {tab === "appearance" && <AppearanceTab onAuthError={onAuthError} />}
       </div>

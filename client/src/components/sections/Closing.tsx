@@ -3,8 +3,8 @@ import { useRef } from "react";
 import heroPortrait from "@/assets/images/hero-portrait.png";
 import { Button } from "@/components/common/Button";
 import { FloatingCard } from "@/components/common/FloatingCard";
-import { CLOSING_COPY, HERO_CARDS } from "@/data/constants";
-import { useProjectCovers } from "@/hooks/useProjectCovers";
+import { CLOSING_COPY } from "@/data/constants";
+import { useHeroCards } from "@/hooks/useHeroCards";
 
 /**
  * The circle closes: the Hero scene replays in reverse — the same cards fly back IN
@@ -12,7 +12,7 @@ import { useProjectCovers } from "@/hooks/useProjectCovers";
  */
 export function Closing() {
   const sectionRef = useRef<HTMLElement>(null);
-  const covers = useProjectCovers();
+  const heroCards = useHeroCards();
   // Progress starts the moment the section's top enters the viewport ("start end"),
   // not when it pins — so the scene is already forming while it slides up from
   // Contact, and there is no empty scroll gap before anything appears.
@@ -35,14 +35,15 @@ export function Closing() {
         <div className="absolute inset-0 bg-vignette" />
 
         {/* same cards, opposite direction — the loop closes */}
-        {HERO_CARDS.map((card, index) => (
+        {heroCards.map(({ card, imageUrl, imageSize }) => (
           <FloatingCard
             key={card.id}
             card={card}
             progress={scrollYProgress}
             mode="enter"
             mirror
-            imageUrl={covers[index] ?? null}
+            imageUrl={imageUrl}
+            imageSize={imageSize}
           />
         ))}
 

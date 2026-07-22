@@ -44,6 +44,15 @@ export interface SocialLink {
   order: number;
 }
 
+/** Dashboard-managed content override for a fixed hero floating-card slot. */
+export interface HeroCardContent {
+  id: string;
+  title: string | null;
+  imageUrl: string | null;
+  imageWidth: number | null;
+  imageHeight: number | null;
+}
+
 /** A "trusted by" client card managed from the dashboard. */
 export interface Client {
   id: string;

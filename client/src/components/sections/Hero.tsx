@@ -2,8 +2,8 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import heroPortrait from "@/assets/images/hero-portrait.png";
 import { FloatingCard } from "@/components/common/FloatingCard";
-import { HERO_CARDS, HERO_COPY } from "@/data/constants";
-import { useProjectCovers } from "@/hooks/useProjectCovers";
+import { HERO_COPY } from "@/data/constants";
+import { useHeroCards } from "@/hooks/useHeroCards";
 
 /**
  * The opening scene. The section is 260vh tall while the visual stays pinned (sticky),
@@ -12,7 +12,7 @@ import { useProjectCovers } from "@/hooks/useProjectCovers";
  */
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
-  const covers = useProjectCovers();
+  const heroCards = useHeroCards();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
@@ -33,13 +33,14 @@ export function Hero() {
         <div className="absolute inset-0 bg-vignette" />
 
         {/* floating work cards, arced around the portrait, each on its own depth */}
-        {HERO_CARDS.map((card, index) => (
+        {heroCards.map(({ card, imageUrl, imageSize }) => (
           <FloatingCard
             key={card.id}
             card={card}
             progress={scrollYProgress}
             mode="exit"
-            imageUrl={covers[index] ?? null}
+            imageUrl={imageUrl}
+            imageSize={imageSize}
           />
         ))}
 

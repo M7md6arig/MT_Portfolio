@@ -8,6 +8,7 @@ import type {
   ApiResponse,
   AuthResponse,
   ContactPayload,
+  HeroCardContent,
   Project,
   ProjectCategory,
   ProjectImage,
@@ -82,6 +83,14 @@ export async function sendContactMessage(payload: ContactPayload): Promise<void>
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const res = await api.post<ApiResponse<AuthResponse>>("/auth/login", { email, password });
   return res.data.data;
+}
+
+export function fetchHeroCards(): Promise<HeroCardContent[]> {
+  return withFallback(
+    async () => (await api.get<ApiResponse<HeroCardContent[]>>("/hero-cards")).data.data,
+    [],
+    "fetchHeroCards",
+  );
 }
 
 export function fetchSettings(): Promise<SiteSettings> {
@@ -168,6 +177,22 @@ export async function adminUpdateSocialLink(
 
 export async function adminDeleteSocialLink(id: string): Promise<void> {
   await api.delete(`/social-links/${id}`);
+}
+
+export async function adminUpdateHeroCard(
+  id: string,
+  payload: { title: string | null },
+): Promise<HeroCardContent> {
+  return (await api.patch<ApiResponse<HeroCardContent>>(`/hero-cards/${id}`, payload)).data.data;
+}
+
+export async function adminUploadHeroCardImage(id: string, file: File): Promise<HeroCardContent> {
+  const form = new FormData();
+  form.append("image", file);
+  const res = await api.post<ApiResponse<HeroCardContent>>(`/hero-cards/${id}/image`, form, {
+    timeout: 30000,
+  });
+  return res.data.data;
 }
 
 export async function adminUpdateSettings(payload: SettingsPayload): Promise<SiteSettings> {

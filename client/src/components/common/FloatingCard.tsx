@@ -13,6 +13,8 @@ interface FloatingCardProps {
   mirror?: boolean;
   /** Real project artwork shown inside the card; without it the card stays plain glass. */
   imageUrl?: string | null;
+  /** Native dimensions of a dashboard-uploaded image — the card adopts its aspect ratio. */
+  imageSize?: { width: number; height: number } | null;
 }
 
 const ASPECT: Record<HeroCardData["aspect"], string> = {
@@ -54,6 +56,7 @@ export function FloatingCard({
   mode = "exit",
   mirror = false,
   imageUrl = null,
+  imageSize = null,
 }: FloatingCardProps) {
   // Orbital parallax: nearer cards sweep a wider angle per scroll unit, so they read as faster.
   const sweep = (mirror ? -1 : 1) * (70 + card.depth * 50);
@@ -96,8 +99,10 @@ export function FloatingCard({
       : [0, restingOpacity * 0.6, restingOpacity],
   );
 
+  // A custom uploaded image dictates the card's aspect; otherwise the slot preset does.
+  const heightFactor = imageSize ? imageSize.height / imageSize.width : HEIGHT_FACTOR[card.aspect];
   const width = Math.round(90 + card.depth * 90);
-  const height = Math.round(width * HEIGHT_FACTOR[card.aspect]);
+  const height = Math.round(width * heightFactor);
 
   // Layering against the portrait (z-20): near cards (depth ≥ 0.6) float in front of it,
   // far cards sit behind the body and get partially hidden at visual intersections.
@@ -118,7 +123,10 @@ export function FloatingCard({
       className="absolute hidden sm:block"
       aria-hidden="true"
     >
-      <div className={cn("glass relative overflow-hidden rounded-lg", ASPECT[card.aspect])}>
+      <div
+        style={imageSize ? { aspectRatio: `${imageSize.width} / ${imageSize.height}` } : undefined}
+        className={cn("glass relative overflow-hidden rounded-lg", !imageSize && ASPECT[card.aspect])}
+      >
         {imageUrl && (
           <img
             src={imageUrl}

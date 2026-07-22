@@ -75,6 +75,18 @@ model Client {
   createdAt     DateTime @default(now())
 }
 
+// Content overrides for the fixed hero floating-card slots (hc-1 … hc-8).
+// Layout (position/depth/rotation) stays in client constants; only title and
+// artwork are managed from the dashboard. Image dimensions drive card aspect.
+model HeroCard {
+  id          String   @id
+  title       String?
+  imageUrl    String?
+  imageWidth  Int?
+  imageHeight Int?
+  updatedAt   DateTime @updatedAt
+}
+
 // Single-row table (id is always "main") holding site-wide theme settings.
 model SiteSettings {
   id             String   @id @default("main")
