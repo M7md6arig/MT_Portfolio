@@ -2,11 +2,13 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/common/Button";
 import { HERO_CARDS } from "@/data/constants";
 import {
+  adminListProjects,
   adminUpdateHeroCard,
   adminUploadHeroCardImage,
   fetchHeroCards,
 } from "@/services/api";
 import type { HeroCardContent } from "@/types";
+import { coverUrl } from "@/utils/project";
 import { adminInput, ErrorBanner, Field, FlashNote, useFlash } from "./adminUi";
 
 /** One fixed hero slot: artwork upload (instant) + title with an explicit save. */
@@ -14,6 +16,7 @@ function SlotEditor({
   slotId,
   defaultTitle,
   content,
+  coverFallback,
   onContentChange,
   onError,
   flash,
@@ -21,6 +24,8 @@ function SlotEditor({
   slotId: string;
   defaultTitle: string;
   content: HeroCardContent | undefined;
+  /** What the public site currently shows for this slot when no custom image is set. */
+  coverFallback: string | null;
   onContentChange: (next: HeroCardContent) => void;
   onError: (err: unknown, message: string) => void;
   flash: (message: string) => void;
@@ -84,13 +89,27 @@ function SlotEditor({
         className="group relative block w-full overflow-hidden rounded-xl border border-dashed border-line transition-colors hover:border-accent/60"
         aria-label={`Upload image for ${slotId}`}
       >
-        {content?.imageUrl ? (
-          <img src={content.imageUrl} alt="" className="max-h-40 w-full object-contain bg-night" />
-        ) : (
-          <div className="grid h-24 place-items-center text-xs text-neutral-500">
-            No custom image — using project cover
-          </div>
-        )}
+        <div className="h-36 bg-night">
+          {content?.imageUrl ? (
+            <>
+              <img src={content.imageUrl} alt="" className="h-full w-full object-contain" />
+              <span className="absolute left-1.5 top-1.5 rounded bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-night">
+                Custom
+              </span>
+            </>
+          ) : coverFallback ? (
+            <>
+              <img src={coverFallback} alt="" className="h-full w-full object-contain" />
+              <span className="absolute left-1.5 top-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-neutral-300">
+                Project cover
+              </span>
+            </>
+          ) : (
+            <div className="grid h-full place-items-center text-xs text-neutral-500">
+              No image yet — click to upload
+            </div>
+          )}
+        </div>
         <span className="absolute inset-0 grid place-items-center bg-black/60 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
           {uploading ? "Uploading…" : "Upload image"}
         </span>
@@ -144,13 +163,17 @@ function SlotEditor({
 
 export function HeroTab({ onAuthError }: { onAuthError: (err: unknown) => void }) {
   const [contents, setContents] = useState<Map<string, HeroCardContent>>(new Map());
+  const [covers, setCovers] = useState<(string | null)[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [flashMessage, flash] = useFlash();
 
   useEffect(() => {
-    fetchHeroCards()
-      .then((cards) => setContents(new Map(cards.map((c) => [c.id, c]))))
+    Promise.all([fetchHeroCards(), adminListProjects().catch(() => [])])
+      .then(([cards, projects]) => {
+        setContents(new Map(cards.map((c) => [c.id, c])));
+        setCovers([...projects].sort((a, b) => a.order - b.order).map(coverUrl));
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -177,12 +200,13 @@ export function HeroTab({ onAuthError }: { onAuthError: (err: unknown) => void }
       <ErrorBanner message={error} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {HERO_CARDS.map((slot) => (
+        {HERO_CARDS.map((slot, index) => (
           <SlotEditor
             key={slot.id}
             slotId={slot.id}
             defaultTitle={slot.title}
             content={contents.get(slot.id)}
+            coverFallback={covers[index] ?? null}
             onContentChange={(next) => {
               setError(null);
               setContents((m) => new Map(m).set(next.id, next));
