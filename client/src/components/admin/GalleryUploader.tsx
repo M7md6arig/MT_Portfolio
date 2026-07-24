@@ -100,15 +100,15 @@ export function GalleryUploader({
         <span className="text-xs text-neutral-500">
           Click or drag & drop — jpg / png / webp, max 20MB each
         </span>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          multiple
-          hidden
-          onChange={onPick}
-        />
       </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        multiple
+        hidden
+        onChange={onPick}
+      />
 
       {error && <p className="text-xs text-red-400">{error}</p>}
 
