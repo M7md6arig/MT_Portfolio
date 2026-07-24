@@ -39,13 +39,13 @@ function ClientCard({ client }: { client: ClientView }) {
         </>
       )}
 
-      <div className="relative px-6">
+      <div className="relative flex h-full items-center justify-center px-6">
         {client.logoUrl ? (
           <img
             src={client.logoUrl}
             alt={client.name}
             loading="lazy"
-            className="max-h-10 max-w-full object-contain"
+            className="h-[65%] w-auto max-w-[85%] object-contain"
             style={{ filter: "brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.45))" }}
           />
         ) : (
