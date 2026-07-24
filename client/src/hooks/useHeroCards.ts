@@ -31,7 +31,10 @@ export function useHeroCards(): HeroCardView[] {
     Promise.all([fetchHeroCards(), fetchProjects()]).then(([overrides, projects]) => {
       if (cancelled) return;
       const bySlot = new Map<string, HeroCardContent>(overrides.map((o) => [o.id, o]));
-      const covers = [...projects].sort((a, b) => a.order - b.order).map(coverUrl);
+      // NOT `.map(coverUrl)` — Array#map also passes the array index as a 2nd
+      // argument, which would land in coverUrl's optional `width` param and
+      // bake a near-zero-width Cloudinary transform into the cover URL.
+      const covers = [...projects].sort((a, b) => a.order - b.order).map((project) => coverUrl(project));
 
       setViews(
         HERO_CARDS.map((card, index) => {

@@ -172,7 +172,9 @@ export function HeroTab({ onAuthError }: { onAuthError: (err: unknown) => void }
     Promise.all([fetchHeroCards(), adminListProjects().catch(() => [])])
       .then(([cards, projects]) => {
         setContents(new Map(cards.map((c) => [c.id, c])));
-        setCovers([...projects].sort((a, b) => a.order - b.order).map(coverUrl));
+        // NOT `.map(coverUrl)` — Array#map also passes the array index as a
+        // 2nd argument, which lands in coverUrl's optional `width` param.
+        setCovers([...projects].sort((a, b) => a.order - b.order).map((project) => coverUrl(project)));
       })
       .finally(() => setLoading(false));
   }, []);
