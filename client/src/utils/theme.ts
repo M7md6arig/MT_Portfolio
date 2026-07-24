@@ -1,5 +1,8 @@
 import type { SiteSettings } from "@/types";
 
+/** Read synchronously by the inline script in index.html, before the app even loads. */
+export const THEME_STORAGE_KEY = "mt_site_theme";
+
 /** "#e0b15c" → "224 177 92" (the space-separated triplet Tailwind's rgb(var()) expects) */
 function hexToTriplet(hex: string): string {
   const value = hex.replace("#", "");
@@ -30,4 +33,19 @@ export function applyTheme(settings: SiteSettings): void {
   root.setProperty("--color-secondary", hexToTriplet(settings.secondaryColor));
   root.setProperty("--color-accent", hexToTriplet(settings.accentColor));
   root.setProperty("--color-accent-soft", lighten(settings.accentColor, 0.35));
+
+  // Cached so index.html's inline script can apply it instantly on the next
+  // load, before the app boots — avoids a flash of the default palette.
+  try {
+    localStorage.setItem(
+      THEME_STORAGE_KEY,
+      JSON.stringify({
+        primaryColor: settings.primaryColor,
+        secondaryColor: settings.secondaryColor,
+        accentColor: settings.accentColor,
+      }),
+    );
+  } catch {
+    // Storage disabled/full — the flash-prevention script just no-ops next load.
+  }
 }

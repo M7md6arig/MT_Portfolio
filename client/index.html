@@ -8,6 +8,44 @@
       content="Cinematic portfolio of Mohamed Tarig — posters, motion graphics, video and web design."
     />
     <title>MT — Art Direction &amp; Design</title>
+    <script>
+      // Applies the last-known theme (cached by utils/theme.ts) synchronously,
+      // before the app boots — avoids a flash of the hardcoded default palette
+      // while the real settings are fetched. Kept in plain JS: it must run
+      // before any module/bundle code.
+      (function () {
+        try {
+          var raw = localStorage.getItem("mt_site_theme");
+          if (!raw) return;
+          var s = JSON.parse(raw);
+          function toTriplet(hex) {
+            hex = hex.replace("#", "");
+            return (
+              parseInt(hex.slice(0, 2), 16) +
+              " " +
+              parseInt(hex.slice(2, 4), 16) +
+              " " +
+              parseInt(hex.slice(4, 6), 16)
+            );
+          }
+          function lighten(hex, amount) {
+            hex = hex.replace("#", "");
+            function ch(o) {
+              var c = parseInt(hex.slice(o, o + 2), 16);
+              return Math.round(c + (255 - c) * amount);
+            }
+            return ch(0) + " " + ch(2) + " " + ch(4);
+          }
+          var root = document.documentElement.style;
+          if (s.primaryColor) root.setProperty("--color-primary", toTriplet(s.primaryColor));
+          if (s.secondaryColor) root.setProperty("--color-secondary", toTriplet(s.secondaryColor));
+          if (s.accentColor) {
+            root.setProperty("--color-accent", toTriplet(s.accentColor));
+            root.setProperty("--color-accent-soft", lighten(s.accentColor, 0.35));
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
