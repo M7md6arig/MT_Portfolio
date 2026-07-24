@@ -1,10 +1,9 @@
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/common/Button";
 import { adminUpdateSettings, adminUploadSiteLogo, fetchSettings } from "@/services/api";
 import type { SettingsPayload } from "@/types";
 import { applyTheme } from "@/utils/theme";
-import { ErrorBanner, Field, FlashNote, useFlash } from "./adminUi";
-import { SingleImageUpload } from "./SingleImageUpload";
+import { ErrorBanner, Field } from "./adminUi";
 
 type ColorFields = Pick<SettingsPayload, "primaryColor" | "secondaryColor" | "accentColor">;
 
@@ -15,6 +14,8 @@ const COLOR_FIELDS: { key: keyof ColorFields; label: string; hint: string }[] = 
 ];
 
 const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const MAX_LOGO_BYTES = 5 * 1024 * 1024;
+const ALLOWED_LOGO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => void }) {
   const [colors, setColors] = useState<Required<ColorFields>>({
@@ -24,22 +25,36 @@ export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => 
   });
   // What the hex text inputs show — may be mid-edit and temporarily invalid.
   const [drafts, setDrafts] = useState<Required<ColorFields>>(colors);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  // Logo: savedLogoUrl is what's on the server; logoFile/logoPreview are a
+  // pending selection that only takes effect on Save (same submit as colors).
+  const [savedLogoUrl, setSavedLogoUrl] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [removeLogo, setRemoveLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [flashMessage, flash] = useFlash();
 
   useEffect(() => {
     fetchSettings()
       .then(({ primaryColor, secondaryColor, accentColor, logoUrl }) => {
         setColors({ primaryColor, secondaryColor, accentColor });
         setDrafts({ primaryColor, secondaryColor, accentColor });
-        setLogoUrl(logoUrl);
+        setSavedLogoUrl(logoUrl);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  // Release the local preview URL once it's no longer shown.
+  useEffect(() => {
+    return () => {
+      if (logoPreview) URL.revokeObjectURL(logoPreview);
+    };
+  }, [logoPreview]);
 
   function setColor(key: keyof ColorFields, value: string) {
     setSaved(false);
@@ -49,6 +64,22 @@ export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => 
     }
   }
 
+  function onPickLogo(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!ALLOWED_LOGO_TYPES.includes(file.type) || file.size > MAX_LOGO_BYTES) {
+      setError("Only jpg/png/webp up to 5MB are allowed.");
+      return;
+    }
+    setError(null);
+    setSaved(false);
+    setRemoveLogo(false);
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  }
+
+  const displayedLogo = removeLogo ? null : (logoPreview ?? savedLogoUrl);
   const allValid = Object.values(drafts).every((v) => HEX_PATTERN.test(v));
 
   async function onSubmit(event: FormEvent) {
@@ -57,13 +88,19 @@ export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => 
     setError(null);
     setSaved(false);
     try {
-      const settings = await adminUpdateSettings(colors);
-      // Re-theme this tab immediately; the public site picks it up on next load.
+      let settings = await adminUpdateSettings(removeLogo ? { ...colors, clearLogo: true } : colors);
+      if (logoFile) {
+        settings = await adminUploadSiteLogo(logoFile);
+      }
       applyTheme(settings);
+      setSavedLogoUrl(settings.logoUrl);
+      setLogoFile(null);
+      setLogoPreview(null);
+      setRemoveLogo(false);
       setSaved(true);
     } catch (err) {
       onAuthError(err);
-      setError("Saving colors failed.");
+      setError("Saving failed.");
     } finally {
       setSaving(false);
     }
@@ -72,38 +109,48 @@ export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => 
   if (loading) return <p className="py-8 text-center text-sm text-neutral-500">Loading…</p>;
 
   return (
-    <div className="max-w-xl space-y-10">
+    <form onSubmit={onSubmit} className="max-w-xl space-y-10">
+      <ErrorBanner message={error} />
+
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold text-white">Site logo</h2>
-          <FlashNote message={flashMessage} />
-        </div>
+        <h2 className="font-display text-lg font-semibold text-white">Site logo</h2>
         <p className="text-xs text-neutral-500">
-          Shown in the navbar instead of the "MT.studio" text. Remove it to fall back to the text
-          wordmark.
+          Shown in the navbar instead of the "MT.studio" text. Picking a new image or removing the
+          logo only takes effect once you press Save below.
         </p>
-        <SingleImageUpload
-          label="Logo"
-          imageUrl={logoUrl}
-          onError={setError}
-          onUpload={async (file) => {
-            const settings = await adminUploadSiteLogo(file);
-            setLogoUrl(settings.logoUrl);
-            flash("Logo uploaded ✓");
-          }}
+
+        <button
+          type="button"
+          onClick={() => logoInputRef.current?.click()}
+          className="group relative block w-full overflow-hidden rounded-xl border border-dashed border-line bg-night/40 transition-colors hover:border-accent/60"
+        >
+          {displayedLogo ? (
+            <img src={displayedLogo} alt="" className="h-32 w-full bg-night object-contain" />
+          ) : (
+            <div className="grid h-24 place-items-center text-xs text-neutral-500">
+              {removeLogo ? "Logo will be removed on save" : "Click to upload"}
+            </div>
+          )}
+          <span className="absolute inset-0 grid place-items-center bg-black/60 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+            Choose image
+          </span>
+        </button>
+        <input
+          ref={logoInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          hidden
+          onChange={onPickLogo}
         />
-        {logoUrl && (
+
+        {displayedLogo && (
           <button
             type="button"
-            onClick={async () => {
-              try {
-                const settings = await adminUpdateSettings({ clearLogo: true });
-                setLogoUrl(settings.logoUrl);
-                flash("Logo removed ✓ — back to text wordmark");
-              } catch (err) {
-                onAuthError(err);
-                setError("Removing the logo failed.");
-              }
+            onClick={() => {
+              setRemoveLogo(true);
+              setLogoFile(null);
+              setLogoPreview(null);
+              setSaved(false);
             }}
             className="text-xs text-neutral-500 underline-offset-2 transition-colors hover:text-red-400 hover:underline"
           >
@@ -112,11 +159,9 @@ export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => 
         )}
       </section>
 
-      <form onSubmit={onSubmit} className="space-y-6">
+      <section className="space-y-5">
         <h2 className="font-display text-lg font-semibold text-white">Theme colors</h2>
-        <ErrorBanner message={error} />
 
-      <div className="space-y-5">
         {COLOR_FIELDS.map(({ key, label, hint }) => {
           const draftValid = HEX_PATTERN.test(drafts[key]);
           return (
@@ -156,15 +201,14 @@ export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => 
             </Field>
           );
         })}
-      </div>
+      </section>
 
-        <div className="flex items-center gap-4">
-          <Button type="submit" disabled={saving || !allValid} className="disabled:opacity-60">
-            {saving ? "Saving…" : "Save colors"}
-          </Button>
-          {saved && <span className="text-sm text-emerald-400">Saved ✓</span>}
-        </div>
-      </form>
-    </div>
+      <div className="flex items-center gap-4">
+        <Button type="submit" disabled={saving || !allValid} className="disabled:opacity-60">
+          {saving ? "Saving…" : "Save"}
+        </Button>
+        {saved && <span className="text-sm text-emerald-400">Saved ✓</span>}
+      </div>
+    </form>
   );
 }
