@@ -4,10 +4,14 @@ import { prisma } from "../config/prisma";
 
 const UPLOAD_FOLDER = "mt-portfolio/projects";
 
-export function uploadToCloudinary(buffer: Buffer, folder: string): Promise<UploadApiResponse> {
+export function uploadToCloudinary(
+  buffer: Buffer,
+  folder: string,
+  options?: { transformation?: Record<string, unknown>[] },
+): Promise<UploadApiResponse> {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: "image" },
+      { folder, resource_type: "image", ...options },
       (error, result) => {
         if (error || !result) reject(error ?? new Error("Cloudinary returned no result"));
         else resolve(result);

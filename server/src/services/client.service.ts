@@ -35,9 +35,17 @@ export function deleteClient(id: string) {
   return prisma.client.delete({ where: { id } });
 }
 
-/** Uploads a new logo and replaces the stored URL (old asset stays in Cloudinary). */
+/**
+ * Uploads a new logo and replaces the stored URL (old asset stays in Cloudinary).
+ * Trims transparent/uniform padding baked into the source file, so the mark
+ * itself fills the frame instead of floating small inside empty canvas.
+ */
 export async function uploadClientLogo(id: string, buffer: Buffer) {
-  const uploaded = await uploadToCloudinary(buffer, LOGO_FOLDER);
+  const uploaded = await uploadToCloudinary(buffer, LOGO_FOLDER, {
+    // Cap megapixels first — Cloudinary's trim effect refuses anything over 25MP,
+    // and some source logo files are print-resolution canvases.
+    transformation: [{ width: 4000, height: 4000, crop: "limit" }, { effect: "trim" }],
+  });
   return prisma.client.update({ where: { id }, data: { logoUrl: uploaded.secure_url } });
 }
 

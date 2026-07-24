@@ -57,7 +57,11 @@ async function main() {
     }
 
     const buffer = fs.readFileSync(logoPath);
-    const uploaded = await uploadToCloudinary(buffer, LOGO_FOLDER);
+    // Cap megapixels (trim refuses >25MP) then trim transparent/uniform padding
+    // baked into the source PNG so the mark fills the frame.
+    const uploaded = await uploadToCloudinary(buffer, LOGO_FOLDER, {
+      transformation: [{ width: 4000, height: 4000, crop: "limit" }, { effect: "trim" }],
+    });
 
     const match = existing.find((c) => c.name.toLowerCase() === name.toLowerCase());
     if (match) {

@@ -45,7 +45,7 @@ function ClientCard({ client }: { client: ClientView }) {
             src={client.logoUrl}
             alt={client.name}
             loading="lazy"
-            className="h-[65%] w-auto max-w-[85%] object-contain"
+            className="h-[65%] w-auto max-w-[80%] object-contain"
             style={{ filter: "brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.45))" }}
           />
         ) : (
