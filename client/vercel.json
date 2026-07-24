@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://mtportfolio-production.up.railway.app"
+      "destination": "https://mtportfolio-production.up.railway.app/api/:path*"
     }
   ]
 }
