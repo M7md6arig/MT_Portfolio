@@ -1,11 +1,14 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/common/Button";
-import { adminUpdateSettings, fetchSettings } from "@/services/api";
+import { adminUpdateSettings, adminUploadSiteLogo, fetchSettings } from "@/services/api";
 import type { SettingsPayload } from "@/types";
 import { applyTheme } from "@/utils/theme";
-import { ErrorBanner, Field } from "./adminUi";
+import { ErrorBanner, Field, FlashNote, useFlash } from "./adminUi";
+import { SingleImageUpload } from "./SingleImageUpload";
 
-const COLOR_FIELDS: { key: keyof SettingsPayload; label: string; hint: string }[] = [
+type ColorFields = Pick<SettingsPayload, "primaryColor" | "secondaryColor" | "accentColor">;
+
+const COLOR_FIELDS: { key: keyof ColorFields; label: string; hint: string }[] = [
   { key: "primaryColor", label: "Primary (background)", hint: "Hero & Closing background" },
   { key: "secondaryColor", label: "Secondary (inner world)", hint: "Sections between the scenes" },
   { key: "accentColor", label: "Accent", hint: "Buttons, highlights, glows" },
@@ -14,28 +17,31 @@ const COLOR_FIELDS: { key: keyof SettingsPayload; label: string; hint: string }[
 const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
 export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => void }) {
-  const [colors, setColors] = useState<Required<SettingsPayload>>({
+  const [colors, setColors] = useState<Required<ColorFields>>({
     primaryColor: "#0b0b10",
     secondaryColor: "#12141d",
     accentColor: "#e0b15c",
   });
   // What the hex text inputs show — may be mid-edit and temporarily invalid.
-  const [drafts, setDrafts] = useState<Required<SettingsPayload>>(colors);
+  const [drafts, setDrafts] = useState<Required<ColorFields>>(colors);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [flashMessage, flash] = useFlash();
 
   useEffect(() => {
     fetchSettings()
-      .then(({ primaryColor, secondaryColor, accentColor }) => {
+      .then(({ primaryColor, secondaryColor, accentColor, logoUrl }) => {
         setColors({ primaryColor, secondaryColor, accentColor });
         setDrafts({ primaryColor, secondaryColor, accentColor });
+        setLogoUrl(logoUrl);
       })
       .finally(() => setLoading(false));
   }, []);
 
-  function setColor(key: keyof SettingsPayload, value: string) {
+  function setColor(key: keyof ColorFields, value: string) {
     setSaved(false);
     setDrafts((d) => ({ ...d, [key]: value }));
     if (HEX_PATTERN.test(value)) {
@@ -66,9 +72,49 @@ export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => 
   if (loading) return <p className="py-8 text-center text-sm text-neutral-500">Loading…</p>;
 
   return (
-    <form onSubmit={onSubmit} className="max-w-xl space-y-6">
-      <h2 className="font-display text-lg font-semibold text-white">Theme colors</h2>
-      <ErrorBanner message={error} />
+    <div className="max-w-xl space-y-10">
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold text-white">Site logo</h2>
+          <FlashNote message={flashMessage} />
+        </div>
+        <p className="text-xs text-neutral-500">
+          Shown in the navbar instead of the "MT.studio" text. Remove it to fall back to the text
+          wordmark.
+        </p>
+        <SingleImageUpload
+          label="Logo"
+          imageUrl={logoUrl}
+          onError={setError}
+          onUpload={async (file) => {
+            const settings = await adminUploadSiteLogo(file);
+            setLogoUrl(settings.logoUrl);
+            flash("Logo uploaded ✓");
+          }}
+        />
+        {logoUrl && (
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const settings = await adminUpdateSettings({ clearLogo: true });
+                setLogoUrl(settings.logoUrl);
+                flash("Logo removed ✓ — back to text wordmark");
+              } catch (err) {
+                onAuthError(err);
+                setError("Removing the logo failed.");
+              }
+            }}
+            className="text-xs text-neutral-500 underline-offset-2 transition-colors hover:text-red-400 hover:underline"
+          >
+            Remove logo (use text wordmark)
+          </button>
+        )}
+      </section>
+
+      <form onSubmit={onSubmit} className="space-y-6">
+        <h2 className="font-display text-lg font-semibold text-white">Theme colors</h2>
+        <ErrorBanner message={error} />
 
       <div className="space-y-5">
         {COLOR_FIELDS.map(({ key, label, hint }) => {
@@ -112,12 +158,13 @@ export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => 
         })}
       </div>
 
-      <div className="flex items-center gap-4">
-        <Button type="submit" disabled={saving || !allValid} className="disabled:opacity-60">
-          {saving ? "Saving…" : "Save colors"}
-        </Button>
-        {saved && <span className="text-sm text-emerald-400">Saved ✓</span>}
-      </div>
-    </form>
+        <div className="flex items-center gap-4">
+          <Button type="submit" disabled={saving || !allValid} className="disabled:opacity-60">
+            {saving ? "Saving…" : "Save colors"}
+          </Button>
+          {saved && <span className="text-sm text-emerald-400">Saved ✓</span>}
+        </div>
+      </form>
+    </div>
   );
 }

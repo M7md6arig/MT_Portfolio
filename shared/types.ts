@@ -70,6 +70,8 @@ export interface SiteSettings {
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
+  /** Navbar wordmark image; null falls back to the "MT.studio" text logo. */
+  logoUrl: string | null;
 }
 
 export type ProjectPayload = Omit<Project, "id" | "createdAt">;

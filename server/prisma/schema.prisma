@@ -93,6 +93,7 @@ model SiteSettings {
   primaryColor   String   @default("#0b0b10")
   secondaryColor String   @default("#12141d")
   accentColor    String   @default("#e0b15c")
+  logoUrl        String?
   updatedAt      DateTime @updatedAt
 }
 

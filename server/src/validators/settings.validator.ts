@@ -6,6 +6,8 @@ export const updateSettingsSchema = z.object({
   primaryColor: hexColor.optional(),
   secondaryColor: hexColor.optional(),
   accentColor: hexColor.optional(),
+  // true removes the uploaded logo so the navbar falls back to the text wordmark
+  clearLogo: z.boolean().optional(),
 });
 
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;

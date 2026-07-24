@@ -106,7 +106,7 @@ export function fetchClients(): Promise<Client[]> {
 export function fetchSettings(): Promise<SiteSettings> {
   return withFallback(
     async () => (await api.get<ApiResponse<SiteSettings>>("/settings")).data.data,
-    { id: "main", primaryColor: "#0b0b10", secondaryColor: "#12141d", accentColor: "#e0b15c" },
+    { id: "main", primaryColor: "#0b0b10", secondaryColor: "#12141d", accentColor: "#e0b15c", logoUrl: null },
     "fetchSettings",
   );
 }
@@ -205,8 +205,17 @@ export async function adminUploadHeroCardImage(id: string, file: File): Promise<
   return res.data.data;
 }
 
-export async function adminUpdateSettings(payload: SettingsPayload): Promise<SiteSettings> {
+export async function adminUpdateSettings(
+  payload: SettingsPayload & { clearLogo?: boolean },
+): Promise<SiteSettings> {
   return (await api.patch<ApiResponse<SiteSettings>>("/settings", payload)).data.data;
+}
+
+export async function adminUploadSiteLogo(file: File): Promise<SiteSettings> {
+  const form = new FormData();
+  form.append("image", file);
+  const res = await api.post<ApiResponse<SiteSettings>>("/settings/logo", form, { timeout: 30000 });
+  return res.data.data;
 }
 
 export async function adminListClients(): Promise<Client[]> {
