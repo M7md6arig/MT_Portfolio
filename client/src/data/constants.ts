@@ -39,9 +39,9 @@ export const ABOUT = {
   title: "Design with a director's eye",
   bio: "I'm an art director who thinks in scenes: every poster, motion piece and interface starts with a mood, a light source and a reason to look. For the past years I've helped brands and filmmakers find the single frame that says everything.",
   stats: [
-    { value: "6+", label: "Years of experience" },
-    { value: "120+", label: "Projects delivered" },
-    { value: "40+", label: "Happy clients" },
+    { value: "13+", label: "Years of Experience" },
+    { value: "200+", label: "Project Delivered" },
+    { value: "80+", label: "Brands Served" },
   ] satisfies Stat[],
 };
 
