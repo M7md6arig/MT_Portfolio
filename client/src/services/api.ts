@@ -155,6 +155,20 @@ export async function adminDeleteProjectImage(projectId: string, imageId: string
   await api.delete(`/projects/${projectId}/images/${imageId}`);
 }
 
+export async function adminUploadProjectVideo(projectId: string, file: File): Promise<Project> {
+  const form = new FormData();
+  form.append("video", file);
+  const res = await api.post<ApiResponse<Project>>(`/projects/${projectId}/video`, form, {
+    timeout: 120000,
+  });
+  return res.data.data;
+}
+
+export async function adminDeleteProjectVideo(projectId: string): Promise<Project> {
+  const res = await api.delete<ApiResponse<Project>>(`/projects/${projectId}/video`);
+  return res.data.data;
+}
+
 export async function adminListServices(): Promise<Service[]> {
   return (await api.get<ApiResponse<Service[]>>("/services")).data.data;
 }

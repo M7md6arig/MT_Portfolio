@@ -10,6 +10,7 @@ import {
 import type { Project, ProjectCategory, ProjectImage, ProjectPayload } from "@/types";
 import { adminInput, ErrorBanner, Field, FlashNote, RowActions, useFlash } from "./adminUi";
 import { GalleryUploader } from "./GalleryUploader";
+import { VideoUploader } from "./VideoUploader";
 
 const CATEGORIES: ProjectCategory[] = ["poster", "video", "motion", "website"];
 
@@ -251,8 +252,22 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
             />
           </Field>
 
+          <Field label="Video">
+            {editing !== "new" && editing !== null ? (
+              <VideoUploader
+                projectId={editing.id}
+                videoUrl={form.mediaUrl}
+                onChange={(mediaUrl) => setForm((f) => ({ ...f, mediaUrl }))}
+              />
+            ) : (
+              <p className="rounded-xl border border-dashed border-line px-4 py-4 text-xs text-neutral-500">
+                Save the project first — the video uploader opens right here afterwards.
+              </p>
+            )}
+          </Field>
+
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Media URL (optional)">
+            <Field label="External video URL (optional — overridden by an uploaded video)">
               <input
                 type="url"
                 value={form.mediaUrl ?? ""}
