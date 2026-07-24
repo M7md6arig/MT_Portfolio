@@ -59,3 +59,24 @@ export const deleteProjectImage = asyncHandler(async (req: Request, res: Respons
   }
   res.status(204).send();
 });
+
+export const uploadProjectVideo = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) {
+    throw new HttpError(400, 'Missing video file (multipart field "video")');
+  }
+  const project = await projectService.getProjectById(req.params.id);
+  if (!project) {
+    throw new HttpError(404, "Project not found");
+  }
+  const updated = await imageService.uploadProjectVideo(req.params.id, req.file.buffer);
+  res.status(201).json({ data: updated });
+});
+
+export const deleteProjectVideo = asyncHandler(async (req: Request, res: Response) => {
+  const project = await projectService.getProjectById(req.params.id);
+  if (!project) {
+    throw new HttpError(404, "Project not found");
+  }
+  const updated = await imageService.deleteProjectVideo(req.params.id);
+  res.json({ data: updated });
+});

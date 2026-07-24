@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { MulterError } from "multer";
 import { ZodError } from "zod";
-import { MAX_IMAGE_BYTES } from "../config/uploadLimits";
+import { MAX_IMAGE_BYTES, MAX_VIDEO_BYTES } from "../config/uploadLimits";
 
 export class HttpError extends Error {
   constructor(
@@ -30,10 +30,12 @@ export function errorHandler(
   }
 
   if (err instanceof MulterError) {
-    const message =
-      err.code === "LIMIT_FILE_SIZE"
-        ? `Image too large — maximum size is ${MAX_IMAGE_BYTES / (1024 * 1024)}MB`
-        : err.message;
+    let message = err.message;
+    if (err.code === "LIMIT_FILE_SIZE") {
+      const isVideo = err.field === "video";
+      const maxMb = (isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES) / (1024 * 1024);
+      message = `${isVideo ? "Video" : "Image"} too large — maximum size is ${maxMb}MB`;
+    }
     res.status(400).json({ error: message });
     return;
   }

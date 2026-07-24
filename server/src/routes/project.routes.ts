@@ -3,13 +3,15 @@ import {
   createProject,
   deleteProject,
   deleteProjectImage,
+  deleteProjectVideo,
   getProject,
   listProjects,
   updateProject,
   uploadProjectImage,
+  uploadProjectVideo,
 } from "../controllers/project.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
-import { imageUpload } from "../middlewares/upload";
+import { imageUpload, videoUpload } from "../middlewares/upload";
 
 export const projectRouter = Router();
 
@@ -21,3 +23,6 @@ projectRouter.delete("/:id", requireAuth, deleteProject);
 
 projectRouter.post("/:id/images", requireAuth, imageUpload.single("image"), uploadProjectImage);
 projectRouter.delete("/:projectId/images/:imageId", requireAuth, deleteProjectImage);
+
+projectRouter.post("/:id/video", requireAuth, videoUpload.single("video"), uploadProjectVideo);
+projectRouter.delete("/:id/video", requireAuth, deleteProjectVideo);
