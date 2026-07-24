@@ -43,8 +43,8 @@ function SlotEditor({
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      onError(null, "Only jpg/png/webp up to 5MB are allowed.");
+    if (file.size > 20 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      onError(null, "Only jpg/png/webp up to 20MB are allowed.");
       return;
     }
     setUploading(true);

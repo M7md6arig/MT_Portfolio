@@ -3,7 +3,7 @@ import { adminDeleteProjectImage, adminUploadProjectImage } from "@/services/api
 import type { ProjectImage } from "@/types";
 import { cn } from "@/utils/cn";
 
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 20 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
 
 interface GalleryUploaderProps {
@@ -34,7 +34,7 @@ export function GalleryUploader({
 
     const rejected = list.filter((f) => !ALLOWED.includes(f.type) || f.size > MAX_BYTES);
     if (rejected.length > 0) {
-      setError("Some files were skipped — only jpg/png/webp up to 5MB are allowed.");
+      setError("Some files were skipped — only jpg/png/webp up to 20MB are allowed.");
     }
 
     const accepted = list.filter((f) => ALLOWED.includes(f.type) && f.size <= MAX_BYTES);
@@ -98,7 +98,7 @@ export function GalleryUploader({
           {uploading > 0 ? `Uploading ${uploading} image${uploading > 1 ? "s" : ""}…` : "Upload photos"}
         </span>
         <span className="text-xs text-neutral-500">
-          Click or drag & drop — jpg / png / webp, max 5MB each
+          Click or drag & drop — jpg / png / webp, max 20MB each
         </span>
         <input
           ref={inputRef}

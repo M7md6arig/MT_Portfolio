@@ -1,7 +1,7 @@
 import { ChangeEvent, useRef, useState } from "react";
 import { Field } from "./adminUi";
 
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 20 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
 
 interface SingleImageUploadProps {
@@ -22,7 +22,7 @@ export function SingleImageUpload({ label, required, imageUrl, onUpload, onError
     event.target.value = "";
     if (!file) return;
     if (!ALLOWED.includes(file.type) || file.size > MAX_BYTES) {
-      onError("Only jpg/png/webp up to 5MB are allowed.");
+      onError("Only jpg/png/webp up to 20MB are allowed.");
       return;
     }
     setUploading(true);

@@ -14,7 +14,7 @@ const COLOR_FIELDS: { key: keyof ColorFields; label: string; hint: string }[] = 
 ];
 
 const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
-const MAX_LOGO_BYTES = 5 * 1024 * 1024;
+const MAX_LOGO_BYTES = 20 * 1024 * 1024;
 const ALLOWED_LOGO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => void }) {
@@ -69,7 +69,7 @@ export function AppearanceTab({ onAuthError }: { onAuthError: (err: unknown) => 
     event.target.value = "";
     if (!file) return;
     if (!ALLOWED_LOGO_TYPES.includes(file.type) || file.size > MAX_LOGO_BYTES) {
-      setError("Only jpg/png/webp up to 5MB are allowed.");
+      setError("Only jpg/png/webp up to 20MB are allowed.");
       return;
     }
     setError(null);

@@ -146,7 +146,7 @@ export async function adminUploadProjectImage(
   const form = new FormData();
   form.append("image", file);
   const res = await api.post<ApiResponse<ProjectImage>>(`/projects/${projectId}/images`, form, {
-    timeout: 30000, // uploads need more headroom than the default 8s
+    timeout: 120000, // uploads need more headroom than the default 8s
   });
   return res.data.data;
 }
@@ -204,7 +204,7 @@ export async function adminUploadHeroCardImage(id: string, file: File): Promise<
   const form = new FormData();
   form.append("image", file);
   const res = await api.post<ApiResponse<HeroCardContent>>(`/hero-cards/${id}/image`, form, {
-    timeout: 30000,
+    timeout: 120000,
   });
   return res.data.data;
 }
@@ -218,7 +218,7 @@ export async function adminUpdateSettings(
 export async function adminUploadSiteLogo(file: File): Promise<SiteSettings> {
   const form = new FormData();
   form.append("image", file);
-  const res = await api.post<ApiResponse<SiteSettings>>("/settings/logo", form, { timeout: 30000 });
+  const res = await api.post<ApiResponse<SiteSettings>>("/settings/logo", form, { timeout: 120000 });
   return res.data.data;
 }
 
@@ -241,7 +241,7 @@ export async function adminDeleteClient(id: string): Promise<void> {
 async function uploadClientImage(id: string, kind: "logo" | "background", file: File): Promise<Client> {
   const form = new FormData();
   form.append("image", file);
-  const res = await api.post<ApiResponse<Client>>(`/clients/${id}/${kind}`, form, { timeout: 30000 });
+  const res = await api.post<ApiResponse<Client>>(`/clients/${id}/${kind}`, form, { timeout: 120000 });
   return res.data.data;
 }
 
