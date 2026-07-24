@@ -118,16 +118,28 @@ const socialLinks = [
   { platform: "YouTube", url: "https://youtube.com/@your-handle", icon: "youtube", order: 3 },
 ];
 
+const BCRYPT_ROUNDS = 12;
+
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@example.com";
-  const adminPassword = process.env.ADMIN_PASSWORD ?? "admin123";
+  // No insecure fallback: seeding must never silently create a
+  // known-credential admin account (admin@example.com / admin123).
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) {
+    throw new Error(
+      "ADMIN_EMAIL and ADMIN_PASSWORD must be set in the environment — refusing to seed a default admin account.",
+    );
+  }
+  if (adminPassword.length < 12) {
+    throw new Error("ADMIN_PASSWORD must be at least 12 characters.");
+  }
 
   await prisma.user.upsert({
     where: { email: adminEmail },
     update: {},
     create: {
       email: adminEmail,
-      passwordHash: await bcrypt.hash(adminPassword, 10),
+      passwordHash: await bcrypt.hash(adminPassword, BCRYPT_ROUNDS),
       role: "admin",
     },
   });

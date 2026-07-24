@@ -13,6 +13,63 @@ model User {
   email        String @unique
   passwordHash String
   role         String @default("admin")
+
+  // --- security hardening ---
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  // Bumped on password change / manual reset to invalidate every
+  // previously-issued access token in one step.
+  tokenVersion        Int       @default(0)
+  totpSecret          String?
+  totpEnabled         Boolean   @default(false)
+
+  refreshTokens RefreshToken[]
+  loginAudits   LoginAudit[]
+  activityLogs  ActivityLog[]
+}
+
+// One row per active refresh token (hashed, never the raw value) — enables
+// real revocation and rotation-on-use instead of a purely stateless token.
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Every login attempt, successful or not — the admin's own audit trail.
+model LoginAudit {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String
+  ip        String
+  userAgent String
+  success   Boolean
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([email, createdAt])
+}
+
+// Create/update/delete audit trail for dashboard-managed content.
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String
+  userEmail  String
+  action     String
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([entityType, createdAt])
 }
 
 enum Category {
