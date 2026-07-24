@@ -82,7 +82,6 @@ export function GalleryUploader({
         role="button"
         tabIndex={0}
         onClick={() => inputRef.current?.click()}
-        onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
