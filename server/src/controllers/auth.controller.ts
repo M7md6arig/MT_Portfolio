@@ -5,6 +5,9 @@ import { loginSchema } from "../validators/auth.validator";
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = loginSchema.parse(req.body);
-  const result = await authService.login(email, password);
+  const result = await authService.login(email, password, {
+    ip: req.ip ?? "unknown",
+    userAgent: req.headers["user-agent"] ?? "unknown",
+  });
   res.json({ data: result });
 });
