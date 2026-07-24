@@ -11,6 +11,32 @@
   --color-accent-soft: 240 205 138; /* #f0cd8a */
 }
 
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes marquee-reverse {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.marquee-track {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none !important;
+  }
+}
+
 @layer utilities {
   /* One legibility treatment for every text sitting on the hero/closing stage
      (title, subtitle, scroll hint, floating-card labels). */

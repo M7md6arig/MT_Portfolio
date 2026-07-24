@@ -1,65 +1,89 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { fadeInUp, staggerContainer } from "@/animations/variants";
+import { useEffect, useState } from "react";
+import { fadeInUp } from "@/animations/variants";
+import { Marquee } from "@/components/common/Marquee";
 import { TRUSTED_CLIENTS, TRUSTED_COPY } from "@/data/constants";
-import { cn } from "@/utils/cn";
+import { fetchClients } from "@/services/api";
+import type { Client } from "@/types";
+
+type ClientView = Pick<Client, "id" | "name" | "logoUrl" | "backgroundUrl">;
+
+/** Used until real clients load (or if the API/table isn't available yet) — name-only cards, no logo. */
+const FALLBACK_CLIENTS: ClientView[] = TRUSTED_CLIENTS.map((c) => ({
+  id: c.id,
+  name: c.name,
+  logoUrl: null,
+  backgroundUrl: null,
+}));
 
 /**
- * A strip of glass wordmark cards right after the Hero. Hovering a client
- * crossfades a subtle ambient glow (defined per client in data/constants)
- * across the whole section background, and fades back out on leave.
+ * Dark card showing a client's logo forced to white. Hovering reveals the
+ * client's background pattern (when set) crossfaded in behind it, dimmed so
+ * the logo stays legible; without a background the card simply does nothing
+ * on hover — no error, no visual change.
  */
-export function TrustedBy() {
-  const [activeId, setActiveId] = useState<string | null>(null);
+function ClientCard({ client }: { client: ClientView }) {
+  const hasBackground = Boolean(client.backgroundUrl);
 
   return (
-    <section id="clients" className="relative overflow-hidden bg-night px-6 py-24">
-      {/* one glow layer per client — opacity crossfade keeps the transition smooth */}
-      {TRUSTED_CLIENTS.map((client) => (
-        <div
-          key={client.id}
-          aria-hidden="true"
-          style={{ background: client.glow }}
-          className={cn(
-            "pointer-events-none absolute inset-0 transition-opacity duration-[350ms] ease-out",
-            activeId === client.id ? "opacity-100" : "opacity-0",
-          )}
-        />
-      ))}
+    <div className="group relative flex h-24 w-44 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-line bg-black transition-colors duration-300 hover:border-accent/40 sm:h-28 sm:w-52">
+      {hasBackground && (
+        <>
+          <img
+            src={client.backgroundUrl!}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
+          />
+          <div className="absolute inset-0 bg-black/55 opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100" />
+        </>
+      )}
 
-      <motion.div
-        variants={staggerContainer}
+      <div className="relative px-6">
+        {client.logoUrl ? (
+          <img
+            src={client.logoUrl}
+            alt={client.name}
+            loading="lazy"
+            className="max-h-10 max-w-full object-contain"
+            style={{ filter: "brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.45))" }}
+          />
+        ) : (
+          <span className="font-display text-sm font-semibold tracking-widest text-white/70">
+            {client.name}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function TrustedBy() {
+  const [clients, setClients] = useState<ClientView[]>(FALLBACK_CLIENTS);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchClients().then((data) => {
+      if (!cancelled && data.length > 0) setClients(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <section id="clients" className="border-y border-line bg-night py-20">
+      <motion.p
+        variants={fadeInUp}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.4 }}
-        className="relative mx-auto max-w-5xl"
+        viewport={{ once: true, amount: 0.6 }}
+        className="mb-10 text-center text-xs uppercase tracking-[0.3em] text-neutral-500"
       >
-        <motion.p
-          variants={fadeInUp}
-          className="text-center text-xs uppercase tracking-[0.3em] text-neutral-500"
-        >
-          {TRUSTED_COPY.title}
-        </motion.p>
+        {TRUSTED_COPY.title}
+      </motion.p>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-5">
-          {TRUSTED_CLIENTS.map((client) => (
-            <motion.div
-              key={client.id}
-              variants={fadeInUp}
-              style={{ rotate: client.rotate }}
-              whileHover={{ rotate: 0, scale: 1.06 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              onMouseEnter={() => setActiveId(client.id)}
-              onMouseLeave={() => setActiveId(null)}
-              className="glass cursor-default rounded-xl px-7 py-4"
-            >
-              <span className="font-display text-sm font-semibold tracking-widest text-neutral-300">
-                {client.name}
-              </span>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
+      <Marquee items={clients.map((client) => ({ id: client.id, node: <ClientCard client={client} /> }))} />
     </section>
   );
 }
