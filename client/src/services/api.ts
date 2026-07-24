@@ -7,6 +7,8 @@ import {
 import type {
   ApiResponse,
   AuthResponse,
+  Client,
+  ClientPayload,
   ContactPayload,
   HeroCardContent,
   Project,
@@ -90,6 +92,14 @@ export function fetchHeroCards(): Promise<HeroCardContent[]> {
     async () => (await api.get<ApiResponse<HeroCardContent[]>>("/hero-cards")).data.data,
     [],
     "fetchHeroCards",
+  );
+}
+
+export function fetchClients(): Promise<Client[]> {
+  return withFallback(
+    async () => (await api.get<ApiResponse<Client[]>>("/clients")).data.data,
+    [],
+    "fetchClients",
   );
 }
 
@@ -198,3 +208,29 @@ export async function adminUploadHeroCardImage(id: string, file: File): Promise<
 export async function adminUpdateSettings(payload: SettingsPayload): Promise<SiteSettings> {
   return (await api.patch<ApiResponse<SiteSettings>>("/settings", payload)).data.data;
 }
+
+export async function adminListClients(): Promise<Client[]> {
+  return (await api.get<ApiResponse<Client[]>>("/clients")).data.data;
+}
+
+export async function adminCreateClient(payload: ClientPayload): Promise<Client> {
+  return (await api.post<ApiResponse<Client>>("/clients", payload)).data.data;
+}
+
+export async function adminUpdateClient(id: string, payload: Partial<ClientPayload>): Promise<Client> {
+  return (await api.patch<ApiResponse<Client>>(`/clients/${id}`, payload)).data.data;
+}
+
+export async function adminDeleteClient(id: string): Promise<void> {
+  await api.delete(`/clients/${id}`);
+}
+
+async function uploadClientImage(id: string, kind: "logo" | "background", file: File): Promise<Client> {
+  const form = new FormData();
+  form.append("image", file);
+  const res = await api.post<ApiResponse<Client>>(`/clients/${id}/${kind}`, form, { timeout: 30000 });
+  return res.data.data;
+}
+
+export const adminUploadClientLogo = (id: string, file: File) => uploadClientImage(id, "logo", file);
+export const adminUploadClientBackground = (id: string, file: File) => uploadClientImage(id, "background", file);

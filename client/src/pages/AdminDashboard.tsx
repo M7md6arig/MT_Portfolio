@@ -2,18 +2,20 @@ import { isAxiosError } from "axios";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppearanceTab } from "@/components/admin/AppearanceTab";
+import { ClientsTab } from "@/components/admin/ClientsTab";
 import { ContentTab } from "@/components/admin/ContentTab";
 import { HeroTab } from "@/components/admin/HeroTab";
 import { ProjectsTab } from "@/components/admin/ProjectsTab";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/utils/cn";
 
-type TabId = "projects" | "hero" | "content" | "appearance";
+type TabId = "projects" | "hero" | "content" | "clients" | "appearance";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "projects", label: "Projects" },
   { id: "hero", label: "Hero Cards" },
   { id: "content", label: "Services & Links" },
+  { id: "clients", label: "Clients" },
   { id: "appearance", label: "Appearance" },
 ];
 
@@ -84,6 +86,7 @@ export default function AdminDashboard() {
         {tab === "projects" && <ProjectsTab onAuthError={onAuthError} />}
         {tab === "hero" && <HeroTab onAuthError={onAuthError} />}
         {tab === "content" && <ContentTab onAuthError={onAuthError} />}
+        {tab === "clients" && <ClientsTab onAuthError={onAuthError} />}
         {tab === "appearance" && <AppearanceTab onAuthError={onAuthError} />}
       </div>
     </main>
