@@ -12,5 +12,14 @@ export default defineConfig({
   },
   server: {
     port: 5180,
+    // Makes the API appear same-origin to the browser (localhost:5180/api/...)
+    // so the httpOnly auth cookies (SameSite=strict) actually get sent —
+    // mirrors the rewrite in client/vercel.json used in production.
+    proxy: {
+      "/api": {
+        target: "http://localhost:4180",
+        changeOrigin: true,
+      },
+    },
   },
 });

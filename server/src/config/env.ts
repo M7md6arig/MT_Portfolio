@@ -11,6 +11,7 @@ function required(name: string, fallback?: string): string {
 }
 
 export const env = {
+  nodeEnv: process.env.NODE_ENV ?? "development",
   port: Number(process.env.PORT ?? 4000),
   databaseUrl: required("DATABASE_URL"),
   jwtSecret: required("JWT_SECRET", "dev-only-secret-change-in-production"),

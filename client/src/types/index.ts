@@ -3,6 +3,7 @@ import type { ProjectCategory } from "@shared/types";
 export type {
   ApiResponse,
   AuthResponse,
+  AuthUser,
   Client,
   ClientPayload,
   ContactPayload,

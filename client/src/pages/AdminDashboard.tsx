@@ -28,8 +28,7 @@ export default function AdminDashboard() {
   const onAuthError = useCallback(
     (err: unknown) => {
       if (isAxiosError(err) && err.response?.status === 401) {
-        logout();
-        navigate("/admin/login", { replace: true });
+        void logout().then(() => navigate("/admin/login", { replace: true }));
       }
     },
     [logout, navigate],
@@ -53,10 +52,7 @@ export default function AdminDashboard() {
               View site ↗
             </a>
             <button
-              onClick={() => {
-                logout();
-                navigate("/admin/login", { replace: true });
-              }}
+              onClick={() => void logout().then(() => navigate("/admin/login", { replace: true }))}
               className="rounded-lg border border-line px-4 py-2 text-xs text-neutral-300 transition-colors hover:border-red-500/60 hover:text-red-400"
             >
               Log out

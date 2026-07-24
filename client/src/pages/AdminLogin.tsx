@@ -1,3 +1,4 @@
+import { isAxiosError } from "axios";
 import { FormEvent, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/common/Button";
@@ -25,8 +26,11 @@ export default function AdminLogin() {
     try {
       await login(email, password);
       navigate("/admin/dashboard", { replace: true });
-    } catch {
-      setError("Login failed — check your email and password.");
+    } catch (err) {
+      // Rate-limit (429) and lockout (423) responses carry a specific,
+      // already-bilingual message from the server — surface it as-is.
+      const serverMessage = isAxiosError(err) ? (err.response?.data as { error?: string })?.error : null;
+      setError(serverMessage ?? "Login failed — check your email and password.");
     } finally {
       setSubmitting(false);
     }

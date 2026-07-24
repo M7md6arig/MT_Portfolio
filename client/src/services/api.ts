@@ -6,7 +6,7 @@ import {
 } from "@/data/constants";
 import type {
   ApiResponse,
-  AuthResponse,
+  AuthUser,
   Client,
   ClientPayload,
   ContactPayload,
@@ -23,19 +23,13 @@ import type {
   SocialLinkPayload,
 } from "@/types";
 
-export const TOKEN_STORAGE_KEY = "mt_admin_token";
-
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:4000/api",
+  baseURL: import.meta.env.VITE_API_URL ?? "/api",
   timeout: 8000,
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  // Auth lives in httpOnly cookies now — the browser attaches them
+  // automatically as long as the request is same-origin (see vite.config.ts's
+  // dev proxy and client/vercel.json's production rewrite).
+  withCredentials: true,
 });
 
 /** Read endpoints degrade gracefully: if the API is down, placeholder data keeps the site alive. */
@@ -82,9 +76,19 @@ export async function sendContactMessage(payload: ContactPayload): Promise<void>
   await api.post("/contact", payload);
 }
 
-export async function login(email: string, password: string): Promise<AuthResponse> {
-  const res = await api.post<ApiResponse<AuthResponse>>("/auth/login", { email, password });
-  return res.data.data;
+export async function login(email: string, password: string): Promise<AuthUser> {
+  const res = await api.post<ApiResponse<{ user: AuthUser }>>("/auth/login", { email, password });
+  return res.data.data.user;
+}
+
+/** Checks whether the httpOnly session cookie is still valid; the client can't read it directly. */
+export async function fetchMe(): Promise<AuthUser> {
+  const res = await api.get<ApiResponse<{ user: AuthUser }>>("/auth/me");
+  return res.data.data.user;
+}
+
+export async function logoutRequest(): Promise<void> {
+  await api.post("/auth/logout");
 }
 
 export function fetchHeroCards(): Promise<HeroCardContent[]> {
