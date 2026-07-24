@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NAV_LINKS, SITE } from "@/data/constants";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 import { fetchSettings } from "@/services/api";
+import { cloudinaryUrl } from "@/utils/cloudinary";
 import { cn } from "@/utils/cn";
 
 export function Navbar() {
@@ -29,7 +30,7 @@ export function Navbar() {
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <a href="#hero" className="flex items-center font-display text-lg font-bold tracking-widest text-accent">
           {logoUrl ? (
-            <img src={logoUrl} alt={SITE.fullName} className="h-8 w-auto object-contain" />
+            <img src={cloudinaryUrl(logoUrl, 200)} alt={SITE.fullName} className="h-8 w-auto object-contain" />
           ) : (
             <>
               {SITE.name}

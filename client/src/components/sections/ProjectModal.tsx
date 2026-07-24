@@ -5,6 +5,7 @@ import { Modal } from "@/components/common/Modal";
 import { Tag } from "@/components/common/Tag";
 import { CATEGORY_GRADIENTS, CATEGORY_LABELS } from "@/data/constants";
 import type { Project } from "@/types";
+import { cloudinaryUrl } from "@/utils/cloudinary";
 import { cn } from "@/utils/cn";
 
 interface ProjectModalProps {
@@ -28,7 +29,8 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
     Boolean(project.mediaUrl);
 
   const gallery = project?.images ?? [];
-  const mainImage = gallery[activeImage]?.url ?? project?.thumbnailUrl ?? null;
+  const rawMainImage = gallery[activeImage]?.url ?? project?.thumbnailUrl ?? null;
+  const mainImage = rawMainImage ? cloudinaryUrl(rawMainImage, 1400) : null;
 
   function navigate(delta: number) {
     if (gallery.length < 2) return;
@@ -136,7 +138,12 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
                       : "border-line opacity-60 hover:opacity-100",
                   )}
                 >
-                  <img src={image.url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  <img
+                    src={cloudinaryUrl(image.url, 160)}
+                    alt=""
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
                 </button>
               ))}
             </div>

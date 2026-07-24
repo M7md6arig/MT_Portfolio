@@ -5,6 +5,7 @@ import { Marquee } from "@/components/common/Marquee";
 import { TRUSTED_CLIENTS, TRUSTED_COPY } from "@/data/constants";
 import { fetchClients } from "@/services/api";
 import type { Client } from "@/types";
+import { cloudinaryUrl } from "@/utils/cloudinary";
 
 type ClientView = Pick<Client, "id" | "name" | "logoUrl" | "backgroundUrl">;
 
@@ -30,7 +31,7 @@ function ClientCard({ client }: { client: ClientView }) {
       {hasBackground && (
         <>
           <img
-            src={client.backgroundUrl!}
+            src={cloudinaryUrl(client.backgroundUrl!, 500)}
             alt=""
             loading="lazy"
             className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
@@ -42,7 +43,7 @@ function ClientCard({ client }: { client: ClientView }) {
       <div className="relative flex h-full items-center justify-center px-6">
         {client.logoUrl ? (
           <img
-            src={client.logoUrl}
+            src={cloudinaryUrl(client.logoUrl, 300)}
             alt={client.name}
             loading="lazy"
             className="h-[65%] w-auto max-w-[80%] object-contain"

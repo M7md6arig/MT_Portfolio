@@ -2,6 +2,7 @@ import { MotionValue, motion, useTransform } from "framer-motion";
 import { useState } from "react";
 import { ARC } from "@/data/constants";
 import type { HeroCardData } from "@/types";
+import { cloudinaryUrl } from "@/utils/cloudinary";
 import { cn } from "@/utils/cn";
 
 interface FloatingCardProps {
@@ -134,9 +135,9 @@ export function FloatingCard({
       >
         {imageUrl && (
           <img
-            src={imageUrl}
+            src={cloudinaryUrl(imageUrl, 400)}
             alt=""
-            loading="lazy"
+            // Above the fold in both the Hero and Closing scenes — eager, not lazy.
             onLoad={(e) => {
               const img = e.currentTarget;
               if (!imageSize && img.naturalWidth && img.naturalHeight) {

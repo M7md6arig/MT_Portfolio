@@ -87,7 +87,7 @@ export function WorkShowcase() {
                     {/* thin glass frame around the artwork */}
                     <div className="relative overflow-hidden rounded-xl">
                       <LazyImage
-                        src={coverUrl(project)}
+                        src={coverUrl(project, 600)}
                         alt={project.title}
                         className="aspect-[4/3] w-full"
                         fallbackClassName={CATEGORY_GRADIENTS[project.category]}
