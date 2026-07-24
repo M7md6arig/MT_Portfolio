@@ -14,6 +14,9 @@ build/
 *.log
 npm-debug.log*
 
+# local-only source assets for seed scripts (uploaded to Cloudinary, not committed)
+server/seed-assets/
+
 # os / editor
 .DS_Store
 Thumbs.db
