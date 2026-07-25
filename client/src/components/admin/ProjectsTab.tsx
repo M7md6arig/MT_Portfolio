@@ -31,6 +31,7 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Project | "new" | null>(null);
   const [form, setForm] = useState<ProjectPayload>(emptyForm);
+  const [tagsInput, setTagsInput] = useState("");
   const [images, setImages] = useState<ProjectImage[]>([]);
   const [saving, setSaving] = useState(false);
   const [flashMessage, flash] = useFlash();
@@ -55,6 +56,7 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
 
   function openNew() {
     setForm(emptyForm);
+    setTagsInput("");
     setImages([]);
     setEditing("new");
   }
@@ -71,6 +73,7 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
       tags: project.tags,
       order: project.order,
     });
+    setTagsInput(project.tags.join(", "));
     setEditing(project);
   }
 
@@ -78,8 +81,13 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
     event.preventDefault();
     setSaving(true);
     setError(null);
+    const tags = tagsInput
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
     const payload: ProjectPayload = {
       ...form,
+      tags,
       mediaUrl: form.mediaUrl || null,
       liveUrl: form.liveUrl || null,
     };
@@ -290,16 +298,8 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Tags (comma-separated)">
               <input
-                value={form.tags.join(", ")}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    tags: e.target.value
-                      .split(",")
-                      .map((t) => t.trim())
-                      .filter(Boolean),
-                  })
-                }
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
                 className={adminInput}
                 placeholder="branding, key art"
               />
