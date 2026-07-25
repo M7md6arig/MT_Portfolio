@@ -113,9 +113,10 @@ export function FloatingCard({
   // Any known image size dictates the card's aspect; otherwise the slot preset does.
   const size = imageSize ?? measuredSize;
   const heightFactor = size ? size.height / size.width : HEIGHT_FACTOR[card.aspect];
-  // Mobile's own, separate size range — smaller cards to fit the narrower orbit.
-  // Desktop's formula (the else branch) is exactly what it was before mobile existed.
-  const width = isMobile ? Math.round(58 + card.depth * 42) : Math.round(90 + card.depth * 90);
+  // Mobile's own, separate size range — only slightly smaller than desktop
+  // (not the aggressive cut this used to be). Desktop's formula (the else
+  // branch) is exactly what it was before mobile existed.
+  const width = isMobile ? Math.round(72 + card.depth * 72) : Math.round(90 + card.depth * 90);
   const height = Math.round(width * heightFactor);
 
   // Layering against the portrait (z-20): near cards (depth ≥ 0.6) float in front of it,

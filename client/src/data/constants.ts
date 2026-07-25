@@ -102,11 +102,17 @@ export const CLOSING_COPY = {
 export const ARC = { cx: 50, cy: 44, rx: 40, ry: 36 };
 
 /**
- * Mobile-only counterpart of ARC — entirely separate values (not derived from
- * ARC by scaling), so a tweak here can never touch the desktop orbit. A
- * tighter radius keeps cards from crossing the narrow viewport's edges.
+ * Mobile-only counterpart of ARC — a separate constant (not derived from ARC
+ * by scaling), so a tweak here can never touch the desktop orbit. Deliberately
+ * close to desktop's own values rather than compressed: the far sides of the
+ * orbit are allowed to run past the narrow viewport's edges and clip naturally
+ * (the same way a narrow-ish desktop window would clip them) — cramming the
+ * whole ellipse inside the screen width isn't the goal here. Only the
+ * foreground cards passing near the center (in front of the portrait/text)
+ * need to stay clear, and that's a resting-radius/depth concern, not a radius
+ * of the ellipse itself.
  */
-export const ARC_MOBILE = { cx: 50, cy: 40, rx: 30, ry: 30 };
+export const ARC_MOBILE = { cx: 50, cy: 16, rx: 38, ry: 34 };
 
 /**
  * Depth also decides layering: depth ≥ 0.6 renders IN FRONT of the portrait,

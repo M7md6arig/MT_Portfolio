@@ -66,7 +66,7 @@ export function Closing() {
 
         <motion.div
           style={{ opacity: textOpacity, y: textY }}
-          className="absolute inset-x-0 bottom-14 z-30 flex flex-col items-center gap-4 px-6 text-center"
+          className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-2 px-6 pb-2 text-center sm:bottom-14 sm:gap-4 sm:pb-0"
         >
           <span className="text-xs uppercase tracking-[0.3em] text-accent">
             {CLOSING_COPY.eyebrow}

@@ -69,7 +69,7 @@ export function Hero() {
 
         <motion.div
           style={{ opacity: titleOpacity }}
-          className="absolute inset-x-0 bottom-14 z-30 flex flex-col items-center gap-3 px-6 text-center"
+          className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 px-6 pb-2 text-center sm:bottom-14 sm:pb-0"
         >
           <h1 className="text-scene-shadow font-display text-3xl font-bold text-white sm:text-5xl">
             {HERO_COPY.title}
