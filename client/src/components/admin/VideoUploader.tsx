@@ -1,8 +1,21 @@
-import { ChangeEvent, useRef, useState } from "react";
+import { isAxiosError } from "axios";
+import { ChangeEvent, DragEvent, useRef, useState } from "react";
 import { adminDeleteProjectVideo, adminUploadProjectVideo } from "@/services/api";
+import { cn } from "@/utils/cn";
 
 const MAX_BYTES = 50 * 1024 * 1024;
-const ALLOWED = ["video/mp4", "video/webm", "video/quicktime"];
+const ALLOWED_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
+const ALLOWED_EXTENSIONS = /\.(mp4|webm|mov)$/i;
+
+/**
+ * Some browsers/OSes report an unhelpful mimetype for otherwise-valid video
+ * files (empty string, "application/octet-stream", device-specific variants
+ * of .mov's type). Fall back to the file extension instead of rejecting a
+ * real video on a technicality — the server re-validates the same way.
+ */
+function isAllowedVideo(file: File): boolean {
+  return ALLOWED_TYPES.includes(file.type) || ALLOWED_EXTENSIONS.test(file.name);
+}
 
 interface VideoUploaderProps {
   projectId: string;
@@ -14,13 +27,11 @@ interface VideoUploaderProps {
 export function VideoUploader({ projectId, videoUrl, onChange }: VideoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onPick(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    if (!ALLOWED.includes(file.type) || file.size > MAX_BYTES) {
+  async function uploadFile(file: File) {
+    if (!isAllowedVideo(file) || file.size > MAX_BYTES) {
       setError("Only mp4, webm and mov videos up to 50MB are allowed.");
       return;
     }
@@ -29,11 +40,27 @@ export function VideoUploader({ projectId, videoUrl, onChange }: VideoUploaderPr
     try {
       const project = await adminUploadProjectVideo(projectId, file);
       onChange(project.mediaUrl);
-    } catch {
-      setError("Uploading the video failed — check your connection and try again.");
+    } catch (err) {
+      // Surface the server's actual reason (wrong type, too large, etc.)
+      // instead of a generic message that hides what really went wrong.
+      const serverMessage = isAxiosError(err) ? (err.response?.data as { error?: string })?.error : null;
+      setError(serverMessage ?? "Uploading the video failed — check your connection and try again.");
     } finally {
       setUploading(false);
     }
+  }
+
+  function onPick(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) void uploadFile(file);
+  }
+
+  function onDrop(event: DragEvent) {
+    event.preventDefault();
+    setDragOver(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) void uploadFile(file);
   }
 
   async function onRemove() {
@@ -41,8 +68,9 @@ export function VideoUploader({ projectId, videoUrl, onChange }: VideoUploaderPr
     try {
       await adminDeleteProjectVideo(projectId);
       onChange(null);
-    } catch {
-      setError("Removing the video failed.");
+    } catch (err) {
+      const serverMessage = isAxiosError(err) ? (err.response?.data as { error?: string })?.error : null;
+      setError(serverMessage ?? "Removing the video failed.");
     }
   }
 
@@ -60,21 +88,31 @@ export function VideoUploader({ projectId, videoUrl, onChange }: VideoUploaderPr
           </button>
         </div>
       ) : (
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => inputRef.current?.click()}
-          className="flex w-full flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-line bg-night/40 px-4 py-6 text-center transition-colors hover:border-accent/60"
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          className={cn(
+            "flex w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed px-4 py-6 text-center transition-colors",
+            dragOver ? "border-accent bg-accent/10" : "border-line bg-night/40 hover:border-accent/60",
+          )}
         >
           <span className="text-sm text-neutral-300">
-            {uploading ? "Uploading video…" : "Upload video"}
+            {uploading ? "Uploading video…" : "Click or drag & drop to upload"}
           </span>
           <span className="text-xs text-neutral-500">mp4 / webm / mov — max 50MB</span>
-        </button>
+        </div>
       )}
       <input
         ref={inputRef}
         type="file"
-        accept="video/mp4,video/webm,video/quicktime"
+        accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
         hidden
         onChange={onPick}
       />
