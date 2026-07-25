@@ -5,7 +5,7 @@ import { Modal } from "@/components/common/Modal";
 import { Tag } from "@/components/common/Tag";
 import { CATEGORY_GRADIENTS, CATEGORY_LABELS } from "@/data/constants";
 import type { Project } from "@/types";
-import { cloudinaryUrl } from "@/utils/cloudinary";
+import { cloudinaryUrl, videoThumbnailUrl } from "@/utils/cloudinary";
 import { cn } from "@/utils/cn";
 
 interface ProjectModalProps {
@@ -29,8 +29,12 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
     Boolean(project.mediaUrl);
 
   const gallery = project?.images ?? [];
+  // No manually-picked gallery image and the project has a video? Pull a real
+  // frame from it instead of falling straight to the generic stored thumbnail.
+  const videoThumb =
+    gallery.length === 0 && project?.mediaUrl ? videoThumbnailUrl(project.mediaUrl, 1400) : null;
   const rawMainImage = gallery[activeImage]?.url ?? project?.thumbnailUrl ?? null;
-  const mainImage = rawMainImage ? cloudinaryUrl(rawMainImage, 1400) : null;
+  const mainImage = videoThumb ?? (rawMainImage ? cloudinaryUrl(rawMainImage, 1400) : null);
 
   function navigate(delta: number) {
     if (gallery.length < 2) return;
