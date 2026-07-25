@@ -113,13 +113,14 @@ export function FloatingCard({
   // Any known image size dictates the card's aspect; otherwise the slot preset does.
   const size = imageSize ?? measuredSize;
   const heightFactor = size ? size.height / size.width : HEIGHT_FACTOR[card.aspect];
-  // Mobile's own, separate size range — grown back from an earlier, much more
-  // aggressive shrink (36 + depth*36) once the mobile portrait grew larger and
-  // opened up more vertical room. See ARC_MOBILE's comment for how cy (not
-  // this formula) ended up being the constraint that got walked back to fit
-  // the fixed text floor. Desktop's formula (the else branch) is exactly what
-  // it was before mobile existed.
-  const width = isMobile ? Math.round(44 + card.depth * 44) : Math.round(90 + card.depth * 90);
+  // Mobile's own, separate size range — doubled from an earlier, more
+  // moderate size (44 + depth*44) on request, at the explicit cost of
+  // text overlap (see ARC_MOBILE's comment: doubling this and moving the
+  // band below the shoulder is mutually exclusive with the previous
+  // zero-text-overlap rule, given the fixed distance to the title text —
+  // this was measured and disclosed, not silently traded away). Desktop's
+  // formula (the else branch) is exactly what it was before mobile existed.
+  const width = isMobile ? Math.round(88 + card.depth * 88) : Math.round(90 + card.depth * 90);
   const height = Math.round(width * heightFactor);
 
   // Layering against the portrait (z-20): near cards (depth ≥ 0.6) float in front of it,

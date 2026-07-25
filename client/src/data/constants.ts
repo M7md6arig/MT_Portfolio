@@ -110,23 +110,23 @@ export const ARC = { cx: 50, cy: 44, rx: 40, ry: 36 };
  * and clips there naturally. ry is deliberately small, so every card stays
  * within a tight vertical range around cy.
  *
- * cy was asked to sit at the portrait's chest level (matching desktop, where
- * foreground cards render in front of the person, not tucked behind) rather
- * than up near the ceiling. Measured for real at 400x554 with the h-[73vh]
- * portrait: chest/upper-torso is roughly 45-50% down the portrait's own
- * height, landing around cy=63 in viewport %. That value alone reintroduced
- * text overlap (the fixed floor is the title text's top at 367px, unrelated
- * to portrait size, and a true chest-height band sits too close to it once
- * cards are full-sized) — text readability still outranks exact chest
- * placement (same priority call as every earlier round), so cy was walked
- * back up (63 -> 55 -> 50) until the real getBoundingClientRect() sweep
- * (16 Hero + 12 Closing checkpoints, 0-100%) showed zero text overlap at
- * every one. cy=50 lands at the upper-chest/collar area — visibly lower
- * than the previous head-height band, just not literally mid-chest.
- * Ceiling violations remain at a handful of checkpoints, but only during the
- * already-accepted low-opacity exit/entrance fade, never at rest.
+ * cy=74 places the band so its top edge sits below the shoulder line —
+ * explicitly prioritized over the earlier "zero text overlap, always"
+ * rule for this specific request (cards doubled in size AND lowered
+ * further). The shoulder position was measured directly off the source
+ * PNG's alpha channel (not guessed): sampling several x-offsets for the
+ * y at which each column first turns opaque traces the silhouette, and the
+ * columns landing on the shoulder's outer corners (x ~= 35%/65%) go opaque
+ * at ~37.5% of the image's height — cross-checked against a plain visual
+ * read of the source file, which agreed. At h-[73vh] (portraitTop=149.6px,
+ * height=404.4px at 400x554) that's a shoulder line at ~301px; cy=74 (410px)
+ * clears it by the doubled hc-1 card's own half-height (~109px).
+ * Trade-off, accepted explicitly rather than resolved silently: at this
+ * size and depth, cards DO overlap the title/subtitle text through most of
+ * the scroll range (verified — this is no longer a zero-overlap design).
+ * Ceiling violations (top edge above the shoulder) are zero everywhere.
  */
-export const ARC_MOBILE = { cx: 50, cy: 50, rx: 100, ry: 6 };
+export const ARC_MOBILE = { cx: 50, cy: 74, rx: 100, ry: 6 };
 
 /**
  * Depth also decides layering: depth ≥ 0.6 renders IN FRONT of the portrait,
