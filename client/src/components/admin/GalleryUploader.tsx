@@ -81,7 +81,16 @@ export function GalleryUploader({
       <div
         role="button"
         tabIndex={0}
-        onClick={() => inputRef.current?.click()}
+        onClick={(e) => {
+          // The Field wrapper renders a native <label>; since this div isn't itself
+          // a form control, a plain click also triggers the label's own default
+          // action of activating the first labelable descendant (this hidden file
+          // input) — doubling up with the explicit .click() below and opening the
+          // OS file picker twice per click. preventDefault() suppresses that.
+          e.preventDefault();
+          e.stopPropagation();
+          inputRef.current?.click();
+        }}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
