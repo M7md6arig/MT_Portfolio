@@ -1,10 +1,21 @@
-import { ChangeEvent, DragEvent, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, Suspense, lazy, useRef, useState } from "react";
 import { adminDeleteProjectImage, adminUploadProjectImage } from "@/services/api";
 import type { ProjectImage } from "@/types";
 import { cn } from "@/utils/cn";
 
+// pdfjs-dist is a large dependency (~500KB gzipped plus a worker file) needed only
+// when an admin actually picks a PDF — lazy-loaded so it never bloats the bundle
+// every visitor (including the public site) downloads on first load.
+const PdfPageSelector = lazy(() =>
+  import("./PdfPageSelector").then((m) => ({ default: m.PdfPageSelector })),
+);
+
 const MAX_BYTES = 20 * 1024 * 1024;
-const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+function isPdf(file: File): boolean {
+  return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+}
 
 interface GalleryUploaderProps {
   projectId: string;
@@ -24,23 +35,37 @@ export function GalleryUploader({
   onUseAsThumbnail,
 }: GalleryUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(0); // number of in-flight uploads
+  const [progress, setProgress] = useState<{ index: number; total: number } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
 
   async function uploadFiles(files: FileList | File[]) {
     setError(null);
     const list = Array.from(files);
 
-    const rejected = list.filter((f) => !ALLOWED.includes(f.type) || f.size > MAX_BYTES);
-    if (rejected.length > 0) {
-      setError("Some files were skipped — only jpg/png/webp up to 20MB are allowed.");
-    }
+    const pdfFiles = list.filter(isPdf);
+    const rest = list.filter((f) => !isPdf(f));
 
-    const accepted = list.filter((f) => ALLOWED.includes(f.type) && f.size <= MAX_BYTES);
+    const rejected = rest.filter((f) => !ALLOWED_IMAGE_TYPES.includes(f.type) || f.size > MAX_BYTES);
+    const messages: string[] = [];
+    if (pdfFiles.length > 1) {
+      messages.push("Only the first PDF was opened — add the others afterwards.");
+    }
+    if (rejected.length > 0) {
+      messages.push("Some files were skipped — only jpg/png/webp up to 20MB are allowed.");
+    }
+    if (messages.length > 0) setError(messages.join(" "));
+
+    // A PDF isn't uploaded directly — its pages are picked first, then converted
+    // to images and fed back through this same function (see the onUpload prop below).
+    if (pdfFiles.length > 0) setPdfFile(pdfFiles[0]);
+
+    const accepted = rest.filter((f) => ALLOWED_IMAGE_TYPES.includes(f.type) && f.size <= MAX_BYTES);
     let current = images;
-    for (const file of accepted) {
-      setUploading((n) => n + 1);
+    for (let i = 0; i < accepted.length; i++) {
+      const file = accepted[i];
+      setProgress({ index: i + 1, total: accepted.length });
       try {
         const image = await adminUploadProjectImage(projectId, file);
         current = [...current, image];
@@ -49,10 +74,9 @@ export function GalleryUploader({
         if (current.length === 1) onUseAsThumbnail(image.url);
       } catch {
         setError(`Uploading "${file.name}" failed — check your connection and try again.`);
-      } finally {
-        setUploading((n) => n - 1);
       }
     }
+    setProgress(null);
   }
 
   function onPick(event: ChangeEvent<HTMLInputElement>) {
@@ -78,41 +102,61 @@ export function GalleryUploader({
 
   return (
     <div className="space-y-3">
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={(e) => {
-          // The Field wrapper renders a native <label>; since this div isn't itself
-          // a form control, a plain click also triggers the label's own default
-          // action of activating the first labelable descendant (this hidden file
-          // input) — doubling up with the explicit .click() below and opening the
-          // OS file picker twice per click. preventDefault() suppresses that.
-          e.preventDefault();
-          e.stopPropagation();
-          inputRef.current?.click();
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={onDrop}
-        className={cn(
-          "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed px-4 py-6 text-center transition-colors",
-          dragOver ? "border-accent bg-accent/10" : "border-line hover:border-accent/60",
-        )}
-      >
-        <span className="text-sm text-neutral-300">
-          {uploading > 0 ? `Uploading ${uploading} image${uploading > 1 ? "s" : ""}…` : "Upload photos"}
-        </span>
-        <span className="text-xs text-neutral-500">
-          Click or drag & drop — jpg / png / webp, max 20MB each
-        </span>
-      </div>
+      {pdfFile ? (
+        <Suspense
+          fallback={
+            <div className="rounded-xl border border-dashed border-line bg-night/40 p-4 text-xs text-neutral-500">
+              Loading PDF viewer…
+            </div>
+          }
+        >
+          <PdfPageSelector
+            file={pdfFile}
+            uploadProgress={progress}
+            onCancel={() => setPdfFile(null)}
+            onUpload={async (pageFiles) => {
+              await uploadFiles(pageFiles);
+              setPdfFile(null);
+            }}
+          />
+        </Suspense>
+      ) : (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={(e) => {
+            // The Field wrapper renders a native <label>; since this div isn't itself
+            // a form control, a plain click also triggers the label's own default
+            // action of activating the first labelable descendant (this hidden file
+            // input) — doubling up with the explicit .click() below and opening the
+            // OS file picker twice per click. preventDefault() suppresses that.
+            e.preventDefault();
+            e.stopPropagation();
+            inputRef.current?.click();
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          className={cn(
+            "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed px-4 py-6 text-center transition-colors",
+            dragOver ? "border-accent bg-accent/10" : "border-line hover:border-accent/60",
+          )}
+        >
+          <span className="text-sm text-neutral-300">
+            {progress ? `Uploading ${progress.index} of ${progress.total}…` : "Upload photos or a PDF"}
+          </span>
+          <span className="text-xs text-neutral-500">
+            Click or drag & drop — jpg / png / webp (max 20MB) or a PDF to pick pages from
+          </span>
+        </div>
+      )}
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,application/pdf,.pdf"
         multiple
         hidden
         onChange={onPick}
@@ -160,7 +204,7 @@ export function GalleryUploader({
         </div>
       )}
 
-      {uploading > 0 && (
+      {progress !== null && (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
           <div className="aspect-square animate-pulse rounded-lg border border-line bg-white/5" />
         </div>
