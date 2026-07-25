@@ -103,16 +103,31 @@ export const ARC = { cx: 50, cy: 44, rx: 40, ry: 36 };
 
 /**
  * Mobile-only counterpart of ARC — a separate constant (not derived from ARC
- * by scaling), so a tweak here can never touch the desktop orbit. Deliberately
- * close to desktop's own values rather than compressed: the far sides of the
- * orbit are allowed to run past the narrow viewport's edges and clip naturally
- * (the same way a narrow-ish desktop window would clip them) — cramming the
- * whole ellipse inside the screen width isn't the goal here. Only the
- * foreground cards passing near the center (in front of the portrait/text)
- * need to stay clear, and that's a resting-radius/depth concern, not a radius
- * of the ellipse itself.
+ * by scaling), so a tweak here can never touch the desktop orbit.
+ *
+ * Not an ellipse in the desktop sense at all: a narrow horizontal band. rx is
+ * large on purpose — the band runs well past the viewport's left/right edges
+ * and clips there naturally (fine, matches how the desktop orbit already
+ * clips on a narrower browser window). ry is deliberately small, so every
+ * card stays within a tight vertical range around cy instead of sweeping up
+ * toward the top of the screen.
+ *
+ * cy/ry tuned empirically at 400x554 against the portrait's actual measured
+ * top (h-[55vh], bottom-aligned -> 45% of viewport height): no card's own
+ * top edge goes above the portrait's for scroll 0-50% (the resting/orbit
+ * range); only the intentional exit-sweep past ~70% still pokes past it
+ * slightly, while opacity is already fading toward 0.
+ *
+ * KNOWN TRADE-OFF, not yet resolved: pushing the band low enough to clear the
+ * portrait's top puts it in the same vertical band as the title/subtitle text
+ * (Hero's own text sits right below the portrait's top). The two foreground
+ * cards nearest center do overlap the subtitle at rest — confirmed via real
+ * computed styles, not assumed. Fixing that without breaking the ceiling
+ * constraint needs either shrinking card size (out of this round's scope) or
+ * a product decision on which constraint wins; flagged for the user rather
+ * than picked silently.
  */
-export const ARC_MOBILE = { cx: 50, cy: 16, rx: 38, ry: 34 };
+export const ARC_MOBILE = { cx: 50, cy: 66, rx: 100, ry: 3 };
 
 /**
  * Depth also decides layering: depth ≥ 0.6 renders IN FRONT of the portrait,
