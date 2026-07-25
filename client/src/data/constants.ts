@@ -111,26 +111,25 @@ export const ARC = { cx: 50, cy: 44, rx: 40, ry: 36 };
  * clips on a narrower browser window). ry is deliberately small, so every
  * card stays within a tight vertical range around cy.
  *
- * cy solves two constraints at once, both measured for real (not assumed) at
- * the reported 400x554 viewport:
- *   - ceiling: the hero portrait's own top (h-[55vh], bottom-aligned ->
- *     measured at 45% of viewport height, i.e. 249px) — no card may go above it.
- *   - floor: the title text's top (measured at 367px) — no card may reach it,
- *     full stop, at any scroll point, not just the resting 0-50% range.
- * That leaves a 118px window. Text readability outranks card size (explicit
- * priority call), so once ry alone couldn't fit both edges, the cards
- * themselves were shrunk (see FloatingCard's width comment) rather than
- * relaxing either constraint. cy=54 was reached empirically: hc-1's fixed
- * angle (245°, sin≈-0.91) turned out to push it toward the text edge even at
- * rest, not only during the exit sweep's radius growth — the initial
- * cy (55.6, sized only against the exit-sweep worst case) still clipped the
- * text by a few px because of that. Re-verified with real
- * getBoundingClientRect() sweeps across 16 Hero + 12 Closing scroll
- * checkpoints (0 to 100%, not just 0-50%): zero text overlap at every one.
- * Ceiling violations remain at a few checkpoints, but only during the
- * already-accepted low-opacity exit/entrance fade, never at rest.
+ * cy solves two constraints at once, both re-measured for real (not assumed)
+ * after the mobile portrait grew to h-[66vh]:
+ *   - ceiling: the hero portrait's own top, bottom-aligned -> now measured at
+ *     34% of viewport height (188px at 400x554), up from the old 45vh
+ *     portrait's 249px. No card may go above it.
+ *   - floor: the title text's top (measured at 367px, unchanged — text
+ *     position is independent of portrait size). No card may reach it, full
+ *     stop, at any scroll point, not just the resting range.
+ * That leaves a 179px window (up from the old 118px), which is what allowed
+ * cards to grow back up from the earlier shrink-fix's 36+depth*36 (see
+ * FloatingCard's width comment) without reintroducing text overlap.
+ * cy=47, ry=6 were reached empirically the same way as before (real
+ * getBoundingClientRect() sweeps across 16 Hero + 12 Closing checkpoints,
+ * 0-100%): zero text overlap at every one. Ceiling violations remain at a
+ * handful of checkpoints, but only during the already-accepted low-opacity
+ * exit/entrance fade, never at rest — same trade-off as the previous design,
+ * just re-verified against the new geometry.
  */
-export const ARC_MOBILE = { cx: 50, cy: 54, rx: 100, ry: 3 };
+export const ARC_MOBILE = { cx: 50, cy: 47, rx: 100, ry: 6 };
 
 /**
  * Depth also decides layering: depth ≥ 0.6 renders IN FRONT of the portrait,

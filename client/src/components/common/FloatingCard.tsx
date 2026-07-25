@@ -113,20 +113,24 @@ export function FloatingCard({
   // Any known image size dictates the card's aspect; otherwise the slot preset does.
   const size = imageSize ?? measuredSize;
   const heightFactor = size ? size.height / size.width : HEIGHT_FACTOR[card.aspect];
-  // Mobile's own, separate size range. Deliberately smaller than the earlier
-  // mobile attempt (72 + depth*72) — sized so the tallest card at rest
-  // (hc-1: depth 0.85, "portrait" aspect, heightFactor 4/3) fits inside the
-  // ~118px gap between the hero portrait's top and the title text's top at
-  // the reported 400x554 viewport, with margin to spare even at the
-  // exit-sweep's peak radius (EXIT_RADIUS=1.7) — see ARC_MOBILE's comment
-  // for the full derivation. Desktop's formula (the else branch) is exactly
-  // what it was before mobile existed.
-  const width = isMobile ? Math.round(36 + card.depth * 36) : Math.round(90 + card.depth * 90);
+  // Mobile's own, separate size range. Grown back from an earlier, much more
+  // aggressive shrink (36 + depth*36) once the mobile portrait grew to
+  // h-[66vh] and opened up a ~179px vertical window (was ~118px) between its
+  // top and the title text's top — see ARC_MOBILE's comment for the measured
+  // derivation. Desktop's formula (the else branch) is exactly what it was
+  // before mobile existed.
+  const width = isMobile ? Math.round(44 + card.depth * 44) : Math.round(90 + card.depth * 90);
   const height = Math.round(width * heightFactor);
 
   // Layering against the portrait (z-20): near cards (depth ≥ 0.6) float in front of it,
   // far cards sit behind the body and get partially hidden at visual intersections.
-  const zIndex = card.depth >= 0.6 ? 25 : Math.round(6 + card.depth * 12);
+  // Mobile never elevates any card in front of the portrait: with ARC_MOBILE's flat
+  // band sitting near head height, a big foreground card sweeping through the band's
+  // horizontal center (cos(angle)=0) would otherwise blot out the face entirely for a
+  // stretch of scroll. Keeping every mobile card behind the portrait layer costs
+  // nothing visually at rest (cards sit beside the head there, no pixel overlap either
+  // way) and makes that center-crossing read as "passing behind the person" instead.
+  const zIndex = isMobile ? Math.round(6 + card.depth * 12) : card.depth >= 0.6 ? 25 : Math.round(6 + card.depth * 12);
 
   return (
     <motion.div

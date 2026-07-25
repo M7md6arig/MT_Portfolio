@@ -10,15 +10,21 @@ import { useHeroCards } from "@/hooks/useHeroCards";
  * so scroll progress is measured against the Hero's own height only — cards move as a
  * pure function of scroll and freeze the instant the user stops.
  *
- * Mobile uses a shorter section (150vh instead of 260vh). This is safe specifically
- * because scrollYProgress (offset "start start" → "end end") always spans exactly the
- * sticky "stuck window" (sectionHeight − viewportHeight) no matter the section height —
- * progress 1 and the un-stick point are mathematically the same instant. So shortening
- * the section shrinks that window in pixels (same scroll motion drives more of the
- * animation, i.e. it plays faster) without ever going out of sync with the pin/un-stick,
- * unlike compressing the progress *mapping* instead, which can finish the animation
- * while still fully pinned — a dead blank hold before the section even starts scrolling
- * away. Verified empirically before landing on 150vh.
+ * Mobile uses a shorter section (220vh instead of 260vh) — still comfortably below
+ * desktop's span so the scene keeps a distinctly brisker feel, just less aggressively
+ * than the earlier 150vh. This is safe specifically because scrollYProgress (offset
+ * "start start" → "end end") always spans exactly the sticky "stuck window"
+ * (sectionHeight − viewportHeight) no matter the section height — progress 1 and the
+ * un-stick point are mathematically the same instant. So shortening the section shrinks
+ * that window in pixels (same scroll motion drives more of the animation) without ever
+ * going out of sync with the pin/un-stick, unlike compressing the progress *mapping*
+ * instead, which can finish the animation while still fully pinned — a dead blank hold
+ * before the section even starts scrolling away.
+ *
+ * Note: section height only controls scroll *pacing* — the visible scene itself always
+ * renders inside the sticky child, which is exactly one viewport tall (h-screen)
+ * regardless of section height. It has no effect on how much on-screen space the
+ * portrait/cards/text get; that's governed entirely by their own vh/%/px values below.
  */
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -35,7 +41,7 @@ export function Hero() {
   const titleOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
 
   return (
-    <section id="hero" ref={sectionRef} className="relative h-[150vh] sm:h-[260vh]">
+    <section id="hero" ref={sectionRef} className="relative h-[220vh] sm:h-[260vh]">
       <div className="sticky top-0 h-screen overflow-hidden">
         {/* cinematic backdrop: dark stage + faint warm spotlight + edge vignette */}
         <div className="absolute inset-0 bg-night" />
@@ -62,7 +68,7 @@ export function Hero() {
           <img
             src={heroPortrait}
             alt={`Portrait of ${HERO_COPY.title}, art director`}
-            className="h-[55vh] w-auto max-w-none bg-transparent object-contain drop-shadow-portrait sm:h-[82vh]"
+            className="h-[66vh] w-auto max-w-none bg-transparent object-contain drop-shadow-portrait sm:h-[82vh]"
             draggable={false}
           />
         </motion.div>
