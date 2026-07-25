@@ -164,6 +164,7 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
               <tr>
                 <th className="px-4 py-3">Title</th>
                 <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3">Items</th>
                 <th className="px-4 py-3">Order</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -173,6 +174,21 @@ export function ProjectsTab({ onAuthError }: { onAuthError: (err: unknown) => vo
                 <tr key={project.id} className="border-b border-line/50 last:border-0">
                   <td className="px-4 py-3 text-neutral-200">{project.title}</td>
                   <td className="px-4 py-3 capitalize text-neutral-400">{project.category}</td>
+                  <td className="px-4 py-3 text-neutral-400">
+                    <div className="flex items-center gap-1.5">
+                      <span>{project.images?.length ?? 0}</span>
+                      {project.mediaUrl && (
+                        <span
+                          title="Includes a video"
+                          className="grid h-4 w-4 place-items-center rounded-full bg-accent/20 text-accent"
+                        >
+                          <svg width="7" height="8" viewBox="0 0 11 13" fill="currentColor" aria-hidden="true">
+                            <path d="M0.5 0.8v11.4l10-5.7-10-5.7z" />
+                          </svg>
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-neutral-400">{project.order}</td>
                   <td className="px-4 py-3">
                     <RowActions onEdit={() => openEdit(project)} onDelete={() => onDelete(project)} />
