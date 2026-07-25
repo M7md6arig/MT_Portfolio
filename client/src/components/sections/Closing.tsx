@@ -9,6 +9,10 @@ import { useHeroCards } from "@/hooks/useHeroCards";
 /**
  * The circle closes: the Hero scene replays in reverse — the same cards fly back IN
  * from the opposite edges (mirror) and the portrait re-materializes as you scroll.
+ *
+ * Mobile uses a shorter section (92vh instead of 160vh) — see Hero.tsx's comment for
+ * why this is the safe way to make the scene play faster (same reasoning applies here:
+ * progress 1 always lands exactly at the sticky un-stick point regardless of height).
  */
 export function Closing() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -29,7 +33,7 @@ export function Closing() {
   const backgroundColor = useTransform(scrollYProgress, [0, 0.45], ["#12141d", "#0b0b10"]);
 
   return (
-    <section id="closing" ref={sectionRef} className="relative h-[160vh]">
+    <section id="closing" ref={sectionRef} className="relative h-[92vh] sm:h-[160vh]">
       <motion.div style={{ backgroundColor }} className="sticky top-0 h-screen overflow-hidden">
         <div className="absolute inset-0 bg-spotlight" />
         <div className="absolute inset-0 bg-vignette" />
@@ -55,7 +59,7 @@ export function Closing() {
             src={heroPortrait}
             alt=""
             aria-hidden="true"
-            className="h-[82vh] w-auto max-w-none bg-transparent object-contain drop-shadow-portrait"
+            className="h-[55vh] w-auto max-w-none bg-transparent object-contain drop-shadow-portrait sm:h-[82vh]"
             draggable={false}
           />
         </motion.div>

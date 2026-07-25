@@ -1,6 +1,7 @@
 import { MotionValue, motion, useTransform } from "framer-motion";
 import { useState } from "react";
-import { ARC } from "@/data/constants";
+import { ARC, ARC_MOBILE } from "@/data/constants";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import type { HeroCardData } from "@/types";
 import { cloudinaryUrl } from "@/utils/cloudinary";
 import { cn } from "@/utils/cn";
@@ -60,6 +61,11 @@ export function FloatingCard({
   imageUrl = null,
   imageSize = null,
 }: FloatingCardProps) {
+  // Mobile gets its own orbit ellipse and card size entirely — see ARC_MOBILE's
+  // comment. Desktop's branch below is untouched from before this existed.
+  const isMobile = useIsMobile();
+  const arc = isMobile ? ARC_MOBILE : ARC;
+
   // Orbital parallax: nearer cards sweep a wider angle per scroll unit, so they read as faster.
   const sweep = (mirror ? -1 : 1) * (70 + card.depth * 50);
   // Foreground cards (the ones layered in front of the portrait, depth ≥ 0.6) are fully
@@ -85,10 +91,10 @@ export function FloatingCard({
   );
 
   const left = useTransform(
-    () => `${ARC.cx + ARC.rx * radius.get() * Math.cos(toRadians(angle.get()))}%`,
+    () => `${arc.cx + arc.rx * radius.get() * Math.cos(toRadians(angle.get()))}%`,
   );
   const top = useTransform(
-    () => `${ARC.cy - ARC.ry * radius.get() * Math.sin(toRadians(angle.get()))}%`,
+    () => `${arc.cy - arc.ry * radius.get() * Math.sin(toRadians(angle.get()))}%`,
   );
 
   // Full presence through the whole orbit phase; the fade only lands at the very
@@ -107,7 +113,9 @@ export function FloatingCard({
   // Any known image size dictates the card's aspect; otherwise the slot preset does.
   const size = imageSize ?? measuredSize;
   const heightFactor = size ? size.height / size.width : HEIGHT_FACTOR[card.aspect];
-  const width = Math.round(90 + card.depth * 90);
+  // Mobile's own, separate size range — smaller cards to fit the narrower orbit.
+  // Desktop's formula (the else branch) is exactly what it was before mobile existed.
+  const width = isMobile ? Math.round(58 + card.depth * 42) : Math.round(90 + card.depth * 90);
   const height = Math.round(width * heightFactor);
 
   // Layering against the portrait (z-20): near cards (depth ≥ 0.6) float in front of it,
@@ -126,7 +134,7 @@ export function FloatingCard({
         rotate: card.rotate,
         zIndex,
       }}
-      className="absolute hidden sm:block"
+      className="absolute"
       aria-hidden="true"
     >
       <div

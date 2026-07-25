@@ -102,6 +102,13 @@ export const CLOSING_COPY = {
 export const ARC = { cx: 50, cy: 44, rx: 40, ry: 36 };
 
 /**
+ * Mobile-only counterpart of ARC — entirely separate values (not derived from
+ * ARC by scaling), so a tweak here can never touch the desktop orbit. A
+ * tighter radius keeps cards from crossing the narrow viewport's edges.
+ */
+export const ARC_MOBILE = { cx: 50, cy: 40, rx: 30, ry: 30 };
+
+/**
  * Depth also decides layering: depth ≥ 0.6 renders IN FRONT of the portrait,
  * lower depths tuck BEHIND the body (see FloatingCard's zIndex).
  */
