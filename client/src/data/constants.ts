@@ -109,25 +109,28 @@ export const ARC = { cx: 50, cy: 44, rx: 40, ry: 36 };
  * large on purpose — the band runs well past the viewport's left/right edges
  * and clips there naturally (fine, matches how the desktop orbit already
  * clips on a narrower browser window). ry is deliberately small, so every
- * card stays within a tight vertical range around cy instead of sweeping up
- * toward the top of the screen.
+ * card stays within a tight vertical range around cy.
  *
- * cy/ry tuned empirically at 400x554 against the portrait's actual measured
- * top (h-[55vh], bottom-aligned -> 45% of viewport height): no card's own
- * top edge goes above the portrait's for scroll 0-50% (the resting/orbit
- * range); only the intentional exit-sweep past ~70% still pokes past it
- * slightly, while opacity is already fading toward 0.
- *
- * KNOWN TRADE-OFF, not yet resolved: pushing the band low enough to clear the
- * portrait's top puts it in the same vertical band as the title/subtitle text
- * (Hero's own text sits right below the portrait's top). The two foreground
- * cards nearest center do overlap the subtitle at rest — confirmed via real
- * computed styles, not assumed. Fixing that without breaking the ceiling
- * constraint needs either shrinking card size (out of this round's scope) or
- * a product decision on which constraint wins; flagged for the user rather
- * than picked silently.
+ * cy solves two constraints at once, both measured for real (not assumed) at
+ * the reported 400x554 viewport:
+ *   - ceiling: the hero portrait's own top (h-[55vh], bottom-aligned ->
+ *     measured at 45% of viewport height, i.e. 249px) — no card may go above it.
+ *   - floor: the title text's top (measured at 367px) — no card may reach it,
+ *     full stop, at any scroll point, not just the resting 0-50% range.
+ * That leaves a 118px window. Text readability outranks card size (explicit
+ * priority call), so once ry alone couldn't fit both edges, the cards
+ * themselves were shrunk (see FloatingCard's width comment) rather than
+ * relaxing either constraint. cy=54 was reached empirically: hc-1's fixed
+ * angle (245°, sin≈-0.91) turned out to push it toward the text edge even at
+ * rest, not only during the exit sweep's radius growth — the initial
+ * cy (55.6, sized only against the exit-sweep worst case) still clipped the
+ * text by a few px because of that. Re-verified with real
+ * getBoundingClientRect() sweeps across 16 Hero + 12 Closing scroll
+ * checkpoints (0 to 100%, not just 0-50%): zero text overlap at every one.
+ * Ceiling violations remain at a few checkpoints, but only during the
+ * already-accepted low-opacity exit/entrance fade, never at rest.
  */
-export const ARC_MOBILE = { cx: 50, cy: 66, rx: 100, ry: 3 };
+export const ARC_MOBILE = { cx: 50, cy: 54, rx: 100, ry: 3 };
 
 /**
  * Depth also decides layering: depth ≥ 0.6 renders IN FRONT of the portrait,
