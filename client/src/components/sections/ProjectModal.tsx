@@ -64,8 +64,9 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
               />
             ) : (
               <>
-                {/* night backdrop letterboxes portrait/landscape images shown uncropped */}
-                <div className="bg-night">
+                {/* night backdrop letterboxes portrait/landscape images shown uncropped;
+                    the padding gives the image breathing room instead of touching the edges */}
+                <div className="bg-night p-4 sm:p-6">
                   <LazyImage
                     key={mainImage ?? "fallback"}
                     src={mainImage}
