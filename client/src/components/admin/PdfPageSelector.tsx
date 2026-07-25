@@ -20,9 +20,15 @@ interface PdfPageSelectorProps {
   onCancel: () => void;
 }
 
+/** True once a page has failed to render — thumbnails.current[i] stays null for it. */
+function isRenderable(src: string | null): src is string {
+  return src !== null;
+}
+
 /** Renders every page of a PDF as a thumbnail so the user can pick which pages become gallery images. */
 export function PdfPageSelector({ file, uploadProgress, onUpload, onCancel }: PdfPageSelectorProps) {
-  const [thumbnails, setThumbnails] = useState<string[] | null>(null);
+  const [thumbnails, setThumbnails] = useState<(string | null)[] | null>(null);
+  const [failedPages, setFailedPages] = useState<Set<number>>(new Set());
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [rangeFrom, setRangeFrom] = useState("");
@@ -33,31 +39,56 @@ export function PdfPageSelector({ file, uploadProgress, onUpload, onCancel }: Pd
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // Loading the document and rendering its pages are two very different
+      // failure modes. A load failure means the file itself couldn't be opened
+      // (genuinely corrupt, or actually password-protected) — that's fatal.
+      // A single page failing to render (an unsupported font, an odd color
+      // space, one malformed object) does NOT mean the file is bad; the other
+      // pages are still perfectly usable, so it must not abort the whole preview.
+      let pdf: pdfjsLib.PDFDocumentProxy;
       try {
         const buffer = await file.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument({ data: buffer });
         loadingTaskRef.current = loadingTask;
-        const pdf = await loadingTask.promise;
+        pdf = await loadingTask.promise;
+      } catch (err) {
         if (cancelled) return;
-        pdfRef.current = pdf;
-        const pages: string[] = [];
-        for (let i = 1; i <= pdf.numPages; i++) {
+        const isPasswordProtected =
+          err instanceof Error && err.name === "PasswordException";
+        setError(
+          isPasswordProtected
+            ? "This PDF is password-protected — remove the password and try again."
+            : `Couldn't open this PDF: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        return;
+      }
+      if (cancelled) return;
+      pdfRef.current = pdf;
+
+      const pages: (string | null)[] = [];
+      const failed = new Set<number>();
+      for (let i = 1; i <= pdf.numPages; i++) {
+        try {
           const page = await pdf.getPage(i);
           const viewport = page.getViewport({ scale: THUMBNAIL_SCALE });
           const canvas = document.createElement("canvas");
           canvas.width = viewport.width;
           canvas.height = viewport.height;
           const ctx = canvas.getContext("2d");
-          if (!ctx) continue;
+          if (!ctx) throw new Error("2D canvas context unavailable");
           await page.render({ canvasContext: ctx, viewport, canvas }).promise;
           pages.push(canvas.toDataURL("image/png"));
+        } catch (err) {
+          console.error(`[PdfPageSelector] page ${i} failed to render:`, err);
+          pages.push(null);
+          failed.add(i);
         }
-        if (cancelled) return;
-        setThumbnails(pages);
-        setSelected(new Set(Array.from({ length: pdf.numPages }, (_, i) => i + 1)));
-      } catch {
-        if (!cancelled) setError("Couldn't read this PDF — it may be corrupted or password-protected.");
       }
+      if (cancelled) return;
+      setThumbnails(pages);
+      setFailedPages(failed);
+      // Pages that failed to render can't be converted to an image either — leave them unselected.
+      setSelected(new Set(Array.from({ length: pdf.numPages }, (_, i) => i + 1).filter((n) => !failed.has(n))));
     })();
     return () => {
       cancelled = true;
@@ -66,6 +97,7 @@ export function PdfPageSelector({ file, uploadProgress, onUpload, onCancel }: Pd
   }, [file]);
 
   function togglePage(n: number) {
+    if (failedPages.has(n)) return;
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(n)) next.delete(n);
@@ -84,13 +116,17 @@ export function PdfPageSelector({ file, uploadProgress, onUpload, onCancel }: Pd
     setError(null);
     setSelected((prev) => {
       const next = new Set(prev);
-      for (let i = from; i <= to; i++) next.add(i);
+      for (let i = from; i <= to; i++) if (!failedPages.has(i)) next.add(i);
       return next;
     });
   }
 
   function selectAll() {
-    if (thumbnails) setSelected(new Set(Array.from({ length: thumbnails.length }, (_, i) => i + 1)));
+    if (thumbnails) {
+      setSelected(
+        new Set(Array.from({ length: thumbnails.length }, (_, i) => i + 1).filter((n) => !failedPages.has(n))),
+      );
+    }
   }
 
   function deselectAll() {
@@ -101,28 +137,37 @@ export function PdfPageSelector({ file, uploadProgress, onUpload, onCancel }: Pd
     const pdf = pdfRef.current;
     if (!pdf) return;
     setError(null);
-    try {
-      const pageNumbers = Array.from(selected).sort((a, b) => a - b);
-      const baseName = file.name.replace(/\.pdf$/i, "");
-      const files: File[] = [];
-      for (const n of pageNumbers) {
+    const pageNumbers = Array.from(selected).sort((a, b) => a - b);
+    const baseName = file.name.replace(/\.pdf$/i, "");
+    const files: File[] = [];
+    const failedExports: number[] = [];
+    for (const n of pageNumbers) {
+      try {
         const page = await pdf.getPage(n);
         const viewport = page.getViewport({ scale: EXPORT_SCALE });
         const canvas = document.createElement("canvas");
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         const ctx = canvas.getContext("2d");
-        if (!ctx) continue;
+        if (!ctx) throw new Error("2D canvas context unavailable");
         await page.render({ canvasContext: ctx, viewport, canvas }).promise;
         const blob: Blob = await new Promise((resolve, reject) =>
           canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png"),
         );
         files.push(new File([blob], `${baseName}-page-${n}.png`, { type: "image/png" }));
+      } catch (err) {
+        console.error(`[PdfPageSelector] page ${n} failed to convert for upload:`, err);
+        failedExports.push(n);
       }
-      await onUpload(files);
-    } catch {
-      setError("Converting PDF pages to images failed.");
     }
+    if (failedExports.length > 0) {
+      setError(
+        `Page${failedExports.length > 1 ? "s" : ""} ${failedExports.join(", ")} couldn't be converted and ${
+          failedExports.length > 1 ? "were" : "was"
+        } skipped.`,
+      );
+    }
+    if (files.length > 0) await onUpload(files);
   }
 
   const count = selected.size;
@@ -190,21 +235,40 @@ export function PdfPageSelector({ file, uploadProgress, onUpload, onCancel }: Pd
             </button>
           </div>
 
+          {failedPages.size > 0 && (
+            <p className="text-xs text-amber-400">
+              Page{failedPages.size > 1 ? "s" : ""} {Array.from(failedPages).sort((a, b) => a - b).join(", ")}{" "}
+              couldn't be previewed (unsupported content) and {failedPages.size > 1 ? "are" : "is"} excluded.
+            </p>
+          )}
+
           <div className="grid max-h-72 grid-cols-4 gap-2 overflow-y-auto sm:grid-cols-6">
             {thumbnails.map((src, i) => {
               const pageNum = i + 1;
               const isSelected = selected.has(pageNum);
+              const failed = !isRenderable(src);
               return (
                 <button
                   type="button"
                   key={pageNum}
                   onClick={() => togglePage(pageNum)}
+                  disabled={failed}
                   className={cn(
                     "group relative overflow-hidden rounded-lg border-2 transition-colors",
-                    isSelected ? "border-accent" : "border-line opacity-50 hover:opacity-80",
+                    failed
+                      ? "cursor-not-allowed border-line/50 bg-black/40"
+                      : isSelected
+                        ? "border-accent"
+                        : "border-line opacity-50 hover:opacity-80",
                   )}
                 >
-                  <img src={src} alt={`Page ${pageNum}`} className="w-full bg-white" />
+                  {failed ? (
+                    <div className="grid aspect-[3/4] w-full place-items-center text-[9px] text-neutral-600">
+                      Preview failed
+                    </div>
+                  ) : (
+                    <img src={src} alt={`Page ${pageNum}`} className="w-full bg-white" />
+                  )}
                   <span className="absolute bottom-0.5 right-0.5 rounded bg-black/70 px-1 text-[9px] text-neutral-200">
                     {pageNum}
                   </span>
