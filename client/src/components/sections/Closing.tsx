@@ -59,7 +59,7 @@ export function Closing() {
             src={heroPortrait}
             alt=""
             aria-hidden="true"
-            className="h-[66vh] w-auto max-w-none bg-transparent object-contain drop-shadow-portrait sm:h-[82vh]"
+            className="h-[73vh] w-auto max-w-none bg-transparent object-contain drop-shadow-portrait sm:h-[82vh]"
             draggable={false}
           />
         </motion.div>
