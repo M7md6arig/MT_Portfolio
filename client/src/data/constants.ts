@@ -110,23 +110,42 @@ export const ARC = { cx: 50, cy: 44, rx: 40, ry: 36 };
  * and clips there naturally. ry is deliberately small, so every card stays
  * within a tight vertical range around cy.
  *
- * cy=74 places the band so its top edge sits below the shoulder line —
- * explicitly prioritized over the earlier "zero text overlap, always"
- * rule for this specific request (cards doubled in size AND lowered
- * further). The shoulder position was measured directly off the source
- * PNG's alpha channel (not guessed): sampling several x-offsets for the
- * y at which each column first turns opaque traces the silhouette, and the
- * columns landing on the shoulder's outer corners (x ~= 35%/65%) go opaque
- * at ~37.5% of the image's height — cross-checked against a plain visual
- * read of the source file, which agreed. At h-[73vh] (portraitTop=149.6px,
- * height=404.4px at 400x554) that's a shoulder line at ~301px; cy=74 (410px)
- * clears it by the doubled hc-1 card's own half-height (~109px).
- * Trade-off, accepted explicitly rather than resolved silently: at this
- * size and depth, cards DO overlap the title/subtitle text through most of
- * the scroll range (verified — this is no longer a zero-overlap design).
- * Ceiling violations (top edge above the shoulder) are zero everywhere.
+ * cy/ry pin the band to a narrow window the user marked with two red lines on
+ * a real-device screenshot: from the shoulder down to roughly mid-upper-chest
+ * — deliberately narrower than every previous attempt (which spanned much
+ * more of the torso), explicitly reversing the prior round's cy=74 (which had
+ * traded away zero-text-overlap for bigger, lower cards; this round asks for
+ * a tight band instead and shrinks the cards to fit it).
+ *
+ * Both line positions were anchored to the portrait's own proportions rather
+ * than guessed pixels, so they hold at any portrait size:
+ *   - upper line (shoulder): independently re-confirmed at ~37.5% of the
+ *     portrait's height via the source PNG's alpha channel (sampling several
+ *     x-offsets for the y at which each column first turns opaque traces the
+ *     silhouette — the same measurement used two rounds ago).
+ *   - lower line (mid-chest): read off the user's marked screenshot relative
+ *     to the same landmarks, landing at ~45.5% of the portrait's height.
+ * At h-[73vh] (portraitTop=149.6px, height=404.4px at 400x554) that's a
+ * window of ~301px to ~336px — only ~35px tall. cy=57 (~316px) centers it;
+ * ry=1 keeps the orbit's own vertical swing small enough not to blow past
+ * either edge on its own.
+ *
+ * Verified with real getBoundingClientRect() sweeps (16 Hero + 12 Closing
+ * checkpoints, 0-100%): TEXT_OVERLAPS=0 everywhere (trivial now — the window
+ * sits far from the text). In Hero, cards stay fully inside the two lines
+ * for the entire resting phase (0-30% scroll) and drift only 1-4px past
+ * during the exit-sweep fade (accepted, same category as every previous
+ * fade-phase exception). Closing is structurally different: its portrait
+ * never settles into one fixed screen position the way Hero's does (the
+ * section's sticky pin doesn't fully engage — see Closing.tsx's comment), so
+ * the same fixed-viewport-% band can only track the shoulder tightly at
+ * Closing's own analogous "settled" point (~90-100% scroll); earlier in its
+ * entrance it drifts further from the lines, always during the low-opacity
+ * fade-in. This mismatch is inherent to sharing one constant across a scene
+ * whose portrait moves continuously — not something this pass could close
+ * without changing Closing's scroll architecture, which wasn't asked for.
  */
-export const ARC_MOBILE = { cx: 50, cy: 74, rx: 100, ry: 6 };
+export const ARC_MOBILE = { cx: 50, cy: 57, rx: 100, ry: 1 };
 
 /**
  * Depth also decides layering: depth ≥ 0.6 renders IN FRONT of the portrait,
