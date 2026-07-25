@@ -1,6 +1,7 @@
 import { MotionValue, motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { PROCESS_COPY, PROCESS_STEPS } from "@/data/constants";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import type { ProcessStep as ProcessStepData } from "@/types";
 import { cn } from "@/utils/cn";
 
@@ -25,7 +26,18 @@ const WAVE_PATH =
  * briefly clips the stroke, so the line reads as hooking behind the card's corner —
  * touching it for a moment — rather than crossing its full width.
  */
+/**
+ * Mobile gets an entirely different scene, not a scaled-down version of the desktop
+ * one: a plain vertical stack (no sticky pin, no wave — the 4-column zigzag layout
+ * doesn't fit a narrow screen at all), with its own straight line + reveal mechanics.
+ * Desktop's component below (renamed ProcessDesktop) is untouched.
+ */
 export function Process() {
+  const isMobile = useIsMobile();
+  return isMobile ? <ProcessMobile /> : <ProcessDesktop />;
+}
+
+function ProcessDesktop() {
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -75,7 +87,7 @@ export function Process() {
                     index % 2 === 0 ? "justify-start" : "justify-end",
                   )}
                 >
-                  <StepCard step={step} index={index} progress={scrollYProgress} />
+                  <StepCardDesktop step={step} index={index} progress={scrollYProgress} />
                 </div>
               ))}
             </div>
@@ -93,7 +105,7 @@ interface StepCardProps {
 }
 
 /** Dimmed (0.25) until the drawn stroke reaches its anchor, then fades + slides in. */
-function StepCard({ step, index, progress }: StepCardProps) {
+function StepCardDesktop({ step, index, progress }: StepCardProps) {
   const opacity = useTransform(progress, [step.at - 0.12, step.at], [0.25, 1]);
   const y = useTransform(progress, [step.at - 0.12, step.at], [24, 0]);
 
@@ -106,6 +118,70 @@ function StepCard({ step, index, progress }: StepCardProps) {
       <p className="mt-2 hidden text-sm leading-relaxed text-neutral-400 sm:block">
         {step.description}
       </p>
+    </motion.div>
+  );
+}
+
+/**
+ * Mobile: a plain, non-pinned vertical scroll. Steps stack top-to-bottom in order
+ * (01 → 02 → 03 → 04), one per row. A single straight vertical line sits to the
+ * left of the column and grows downward (scaleY, transform-origin: top) as the
+ * user scrolls through the section — driven by the section's own scrollYProgress,
+ * not by a sticky pin, since the section is now just normal document flow.
+ */
+function ProcessMobile() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start 0.85", "end 0.6"],
+  });
+  const lineScale = useTransform(scrollYProgress, [0, 1], [0, 1]);
+
+  return (
+    <section id="process" ref={sectionRef} className="relative bg-world px-6 py-16">
+      <span className="text-xs uppercase tracking-[0.3em] text-accent">Process</span>
+      <h2 className="mt-4 font-display text-3xl font-bold">{PROCESS_COPY.title}</h2>
+      <p className="mt-3 max-w-xl text-neutral-400">{PROCESS_COPY.subtitle}</p>
+
+      <div className="relative mt-10 pl-10">
+        {/* faint full track so the remaining journey is always hinted */}
+        <div className="absolute left-[15px] top-1 bottom-1 w-px bg-white/10" />
+        {/* the golden line that grows with the scroll */}
+        <motion.div
+          style={{ scaleY: lineScale }}
+          className="absolute left-[15px] top-1 bottom-1 w-px origin-top bg-accent"
+        />
+
+        <div className="flex flex-col gap-8">
+          {PROCESS_STEPS.map((step, index) => (
+            <StepCardMobile key={step.id} step={step} index={index} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+interface StepCardMobileProps {
+  step: ProcessStepData;
+  index: number;
+}
+
+/** Slides in from the left and fades in as it enters view; plays once. */
+function StepCardMobile({ step, index }: StepCardMobileProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -32 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true, amount: 0.4 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="glass relative w-full rounded-2xl p-4"
+    >
+      <span className="font-display text-xs font-bold tracking-[0.25em] text-accent">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <h3 className="mt-2 font-display text-base font-semibold">{step.title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-neutral-400">{step.description}</p>
     </motion.div>
   );
 }
