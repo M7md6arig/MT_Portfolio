@@ -3,7 +3,7 @@
  * The server maps Prisma models to these shapes; the client consumes them via services/api.ts.
  */
 
-export type ProjectCategory = "poster" | "video" | "motion" | "website";
+export type ProjectCategory = "poster" | "video" | "motion" | "website" | "branding";
 
 export interface ProjectImage {
   id: string;

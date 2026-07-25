@@ -50,6 +50,7 @@ export const WORK_TABS: TabDef[] = [
   { id: "video", label: "Videos" },
   { id: "motion", label: "Motion Graphics" },
   { id: "website", label: "Websites & UI" },
+  { id: "branding", label: "Branding" },
 ];
 
 export const CATEGORY_LABELS: Record<ProjectCategory, string> = {
@@ -57,6 +58,7 @@ export const CATEGORY_LABELS: Record<ProjectCategory, string> = {
   video: "Video",
   motion: "Motion",
   website: "Web & UI",
+  branding: "Branding",
 };
 
 /** Gradient fallbacks used when a project has no thumbnail yet */
@@ -65,6 +67,7 @@ export const CATEGORY_GRADIENTS: Record<ProjectCategory, string> = {
   video: "from-sky-500/50 via-indigo-900/40 to-night",
   motion: "from-violet-500/50 via-purple-900/40 to-night",
   website: "from-emerald-500/50 via-teal-900/40 to-night",
+  branding: "from-amber-500/50 via-orange-900/40 to-night",
 };
 
 export const SERVICES_COPY = {

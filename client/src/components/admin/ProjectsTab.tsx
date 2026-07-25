@@ -12,7 +12,7 @@ import { adminInput, ErrorBanner, Field, FlashNote, RowActions, useFlash } from 
 import { GalleryUploader } from "./GalleryUploader";
 import { VideoUploader } from "./VideoUploader";
 
-const CATEGORIES: ProjectCategory[] = ["poster", "video", "motion", "website"];
+const CATEGORIES: ProjectCategory[] = ["poster", "video", "motion", "website", "branding"];
 
 const emptyForm: ProjectPayload = {
   title: "",
