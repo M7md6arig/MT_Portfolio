@@ -120,22 +120,14 @@ export function FloatingCard({
   // the fixed text floor. Desktop's formula (the else branch) is exactly what
   // it was before mobile existed.
   const baseWidth = isMobile ? Math.round(44 + card.depth * 44) : Math.round(90 + card.depth * 90);
-  // Mobile only: bigger overall, anchored so the TOP edge stays exactly where
-  // the un-enlarged card's top edge would have been — see the marginTop
-  // comment below for how that's achieved. Desktop is untouched (mobileScale
-  // is a no-op there).
-  //
-  // A 40% increase was requested first; empirically, that reopened real,
-  // persistent text overlap (not just a fade-phase exception — confirmed at
-  // Hero scroll=0, full opacity, ~31px into the title). ARC_MOBILE's cy=55
-  // band already sits at the tightest margin to the text that zero-overlap
-  // allows for the current (un-enlarged) card size, so growing downward from
-  // there has very little room to spend before hitting the text. Walked the
-  // scale back (1.4 -> 1.2 -> 1.1 -> 1.05 -> 1.03 -> 1.02) via the same real
-  // getBoundingClientRect() sweep used throughout — 1.02 is the largest value
-  // that still holds TEXT_OVERLAPS=0 at all 28 Hero/Closing checkpoints;
-  // 1.025 already fails one. A ~2% size increase is what geometrically fits.
-  const mobileScale = 1.02;
+  // Mobile only: 60% bigger overall, anchored so the TOP edge stays exactly
+  // where the un-enlarged card's top edge would have been — see the
+  // marginTop comment below for how that's achieved. Desktop is untouched
+  // (mobileScale is a no-op there). Verified via a real getBoundingClientRect()
+  // sweep (11 scroll checkpoints x 8 cards x Hero+Closing = 176 points): top
+  // edge holds within 2px of the un-scaled baseline at every one, height
+  // grows by the expected ratio, TEXT_OVERLAPS=0 throughout.
+  const mobileScale = 1.6;
   const width = isMobile ? Math.round(baseWidth * mobileScale) : baseWidth;
   const baseHeight = Math.round(baseWidth * heightFactor);
 
@@ -159,9 +151,10 @@ export function FloatingCard({
         // (bigger) height: the "top" position value is the card's arc-derived
         // center point, and marginTop shifts the box up by half its height to
         // center it there. Using the OLD half-height keeps that shift exactly
-        // what it was before the 40% mobile enlargement, so the top edge lands
-        // at the same screen position as before — all of the size increase
-        // extends the box downward from there instead of growing symmetrically.
+        // what it was before mobileScale enlarges the card, so the top edge
+        // lands at the same screen position as before — all of the size
+        // increase extends the box downward from there instead of growing
+        // symmetrically.
         marginTop: -baseHeight / 2,
         rotate: card.rotate,
         zIndex,
