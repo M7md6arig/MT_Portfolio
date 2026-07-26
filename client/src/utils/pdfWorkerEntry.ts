@@ -9,19 +9,21 @@
  * moment pdf.js's code path that uses it runs:
  *   - Uint8Array.prototype.toHex() unconditionally, for every document, in
  *     the fingerprints getter (see the first polyfill below).
- *   - Map.prototype.getOrInsertComputed() from many call sites — font
- *     handling (this.fonts.getOrInsertComputed(...) in getPdfFont), struct
- *     tree parsing, annotations, XFA processing, cipher resolution, and
- *     more (see the second polyfill). This one is real-world-confirmed:
- *     the exact "getOrInsertComputed is not a function" crash was hit by
- *     an actual uploaded PDF ("Presentation.pdf") that failed to preview
- *     on every page. Not every embedded-font PDF hits it, though — a
- *     synthetic multi-page test PDF (Chromium print-to-PDF, embedded
- *     subset fonts, gradients, blend-mode transparency) rendered every
- *     page fine even with this method forcibly removed, so the exact
- *     triggering call site depends on the file's specific structure
- *     (most likely something the simple test file didn't have, e.g. a
- *     struct tree/accessibility tags, annotations, or XFA content).
+ *   - Map.prototype.getOrInsertComputed() from many call sites, all on
+ *     genuine `new Map()` instances (confirmed directly in the installed
+ *     package's source — e.g. `class CipherTransform{#Xt=new Map...}`,
+ *     `class FontFinder{constructor(e){this.fonts=new Map...}}` — not a
+ *     custom pdfjs-internal collection class with its own unrelated
+ *     method of the same name). Real-world-confirmed: an actual uploaded
+ *     PDF ("Presentation.pdf") failed to preview on every page with
+ *     exactly this error. The specific call site is `addPdfFont`, which
+ *     builds its fallback font from a literal "PdfJS-Fallback-PdfJS-XFA"
+ *     — i.e. this is XFA (Adobe's XML Forms Architecture) font handling,
+ *     not a generic embedded-font path. That lines up with two other
+ *     synthetic multi-page PDFs (a plain text license doc, and a Chromium
+ *     print-to-PDF export with embedded subset fonts, gradients, and
+ *     blend-mode transparency) never hitting this code path at all, with
+ *     or without the method present — neither contains XFA content.
  * Which of the two crashes first, and for which files, depends on both the
  * browser and the PDF's own content. A Worker has its own separate JS realm
  * from the main thread, so polyfilling only on the page would never reach
