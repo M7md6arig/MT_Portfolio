@@ -1,7 +1,14 @@
 import * as pdfjsLib from "pdfjs-dist";
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
+// A thin wrapper around pdfjs-dist's own worker script — see its comment for
+// why this can't just be "pdfjs-dist/build/pdf.worker.min.mjs?url" directly.
+// "?worker&url" (not a bare "?url") is Vite's documented pattern for handing
+// a worker's URL, as a string, to a third-party library that constructs its
+// own Worker instance — it bundles the module's own import graph (the nested
+// pdf.worker.min.mjs import) into a proper standalone worker chunk, which a
+// bare "?url" on a source file silently failed to do.
+import pdfWorkerUrl from "@/utils/pdfWorkerEntry.ts?worker&url";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
