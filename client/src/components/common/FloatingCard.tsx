@@ -51,6 +51,17 @@ const EXIT_RADIUS = 1.7;
 const ORBIT_PHASE_END = 0.7;
 const ENTER_SETTLE_AT = 0.3;
 
+/**
+ * Mobile-only: how close to the orbit's horizontal center (in the same
+ * viewport-% units as ARC_MOBILE.rx) a card has to be before it's treated as
+ * "passing over the face" and pushed behind the portrait instead of in front.
+ * Sized to clear the face itself (roughly ±14% of viewport width around
+ * center, measured off the portrait's own silhouette) plus half a card's own
+ * width at the current mobile size, so the card's edge — not just its
+ * center point — clears the face.
+ */
+const MOBILE_FACE_ZONE_PCT = 26;
+
 const toRadians = (deg: number) => (deg * Math.PI) / 180;
 
 export function FloatingCard({
@@ -113,22 +124,35 @@ export function FloatingCard({
   // Any known image size dictates the card's aspect; otherwise the slot preset does.
   const size = imageSize ?? measuredSize;
   const heightFactor = size ? size.height / size.width : HEIGHT_FACTOR[card.aspect];
-  // Mobile's own, separate size range — chosen by eye for a size that reads
-  // clearly on a phone-width screen (not a tiny unreadable dot, not big
-  // enough to dominate the scene), rather than derived from an exact pixel
-  // budget. Verified against the one non-negotiable rule (zero overlap with
-  // the title/subtitle text) via getBoundingClientRect() across the full
-  // scroll range. Desktop's formula (the else branch) is exactly what it was
-  // before mobile existed.
-  const width = isMobile ? Math.round(55 + card.depth * 55) : Math.round(90 + card.depth * 90);
+  // Mobile's own, separate size range — grown back from an earlier, much more
+  // aggressive shrink (36 + depth*36) once the mobile portrait grew larger and
+  // opened up more vertical room. See ARC_MOBILE's comment for how cy (not
+  // this formula) ended up being the constraint that got walked back to fit
+  // the fixed text floor. Desktop's formula (the else branch) is exactly what
+  // it was before mobile existed.
+  const width = isMobile ? Math.round(44 + card.depth * 44) : Math.round(90 + card.depth * 90);
   const height = Math.round(width * heightFactor);
 
   // Layering against the portrait (z-20): near cards (depth ≥ 0.6) float in front of it,
   // far cards sit behind the body and get partially hidden at visual intersections.
-  // Mobile uses the identical rule now — ARC_MOBILE's band sits at chest height (see
-  // its comment), below the face, so a foreground card crossing the band's horizontal
-  // center passes in front of the chest/shoulders rather than blotting out the face.
-  const zIndex = card.depth >= 0.6 ? 25 : Math.round(6 + card.depth * 12);
+  //
+  // Mobile can't just always use this rule: at this card size, one whose angle
+  // sweep carries it through the orbit's horizontal center — directly over the
+  // face — would fully cover it while "in front". But always rendering mobile
+  // cards behind the portrait (an earlier attempt) made the cards passing
+  // beside the head look washed out, since they'd dim behind the portrait's
+  // shadow even when clear of the face. So it's neither always-front nor
+  // always-behind: only cards currently near dead-center (over the face) drop
+  // behind; cards out at the sides keep the normal desktop-style front/back
+  // rule. This has to be scroll-reactive (a MotionValue), since a card's
+  // horizontal position changes continuously as it orbits.
+  const backgroundZIndex = Math.round(6 + card.depth * 12);
+  const desktopStyleZIndex = card.depth >= 0.6 ? 25 : backgroundZIndex;
+  const mobileZIndex = useTransform(() => {
+    const horizontalOffset = Math.abs(arc.rx * radius.get() * Math.cos(toRadians(angle.get())));
+    return horizontalOffset < MOBILE_FACE_ZONE_PCT ? backgroundZIndex : desktopStyleZIndex;
+  });
+  const zIndex = isMobile ? mobileZIndex : desktopStyleZIndex;
 
   return (
     <motion.div
@@ -166,26 +190,21 @@ export function FloatingCard({
             )}
           />
         )}
-        {/* Mobile cards are pure imagery — at this size the title label would be
-            unreadable anyway, and dropping it removes any visual cost from the
-            card brushing up against nearby text (nothing left to visually clash). */}
-        {!isMobile && (
-          <div
+        <div
+          className={cn(
+            "relative flex h-full flex-col justify-end p-2.5",
+            imageUrl && "bg-gradient-to-t from-black/60 to-transparent",
+          )}
+        >
+          <span
             className={cn(
-              "relative flex h-full flex-col justify-end p-2.5",
-              imageUrl && "bg-gradient-to-t from-black/60 to-transparent",
+              "text-scene-shadow text-[9px] font-medium leading-snug tracking-wide",
+              imageUrl ? "text-white" : "text-white/40",
             )}
           >
-            <span
-              className={cn(
-                "text-scene-shadow text-[9px] font-medium leading-snug tracking-wide",
-                imageUrl ? "text-white" : "text-white/40",
-              )}
-            >
-              {card.title}
-            </span>
-          </div>
-        )}
+            {card.title}
+          </span>
+        </div>
       </div>
     </motion.div>
   );

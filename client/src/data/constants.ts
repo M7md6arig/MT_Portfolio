@@ -105,18 +105,28 @@ export const ARC = { cx: 50, cy: 44, rx: 40, ry: 36 };
  * Mobile-only counterpart of ARC — a separate constant (not derived from ARC
  * by scaling), so a tweak here can never touch the desktop orbit.
  *
- * Deliberately NOT derived from a precise pixel measurement this time — after
- * several rounds of chasing exact red-line positions, the brief simplified to
- * "sits comfortably below the face, doesn't touch the neck, doesn't drift too
- * low": cy=56 puts the band just under the chin/shoulder area by eye. rx wide
- * so the band clips off the left/right edges naturally; ry small enough to
- * keep the band tight without needing to be exact.
+ * Not an ellipse in the desktop sense at all: a narrow horizontal band. rx is
+ * large on purpose — the band runs well past the viewport's left/right edges
+ * and clips there naturally. ry is deliberately small, so every card stays
+ * within a tight vertical range around cy.
  *
- * The one non-negotiable constraint (zero overlap with the title/subtitle
- * text) is still verified for real via getBoundingClientRect() across the
- * full scroll range — see FloatingCard's width comment for the matching note.
+ * cy was asked to sit at the portrait's chest level (matching desktop, where
+ * foreground cards render in front of the person, not tucked behind) rather
+ * than up near the ceiling. Measured for real at 400x554 with the h-[73vh]
+ * portrait: chest/upper-torso is roughly 45-50% down the portrait's own
+ * height, landing around cy=63 in viewport %. That value alone reintroduced
+ * text overlap (the fixed floor is the title text's top at 367px, unrelated
+ * to portrait size, and a true chest-height band sits too close to it once
+ * cards are full-sized) — text readability still outranks exact chest
+ * placement (same priority call as every earlier round), so cy was walked
+ * back up (63 -> 55 -> 50) until the real getBoundingClientRect() sweep
+ * (16 Hero + 12 Closing checkpoints, 0-100%) showed zero text overlap at
+ * every one. cy=50 lands at the upper-chest/collar area — visibly lower
+ * than the previous head-height band, just not literally mid-chest.
+ * Ceiling violations remain at a handful of checkpoints, but only during the
+ * already-accepted low-opacity exit/entrance fade, never at rest.
  */
-export const ARC_MOBILE = { cx: 50, cy: 48, rx: 100, ry: 5 };
+export const ARC_MOBILE = { cx: 50, cy: 50, rx: 100, ry: 6 };
 
 /**
  * Depth also decides layering: depth ≥ 0.6 renders IN FRONT of the portrait,
