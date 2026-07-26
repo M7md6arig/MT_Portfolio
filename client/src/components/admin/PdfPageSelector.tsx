@@ -36,6 +36,7 @@ function isRenderable(src: string | null): src is string {
 export function PdfPageSelector({ file, uploadProgress, onUpload, onCancel }: PdfPageSelectorProps) {
   const [thumbnails, setThumbnails] = useState<(string | null)[] | null>(null);
   const [failedPages, setFailedPages] = useState<Set<number>>(new Set());
+  const [failureReasons, setFailureReasons] = useState<Map<number, string>>(new Map());
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [rangeFrom, setRangeFrom] = useState("");
@@ -74,6 +75,7 @@ export function PdfPageSelector({ file, uploadProgress, onUpload, onCancel }: Pd
 
       const pages: (string | null)[] = [];
       const failed = new Set<number>();
+      const reasons = new Map<number, string>();
       for (let i = 1; i <= pdf.numPages; i++) {
         try {
           const page = await pdf.getPage(i);
@@ -89,11 +91,18 @@ export function PdfPageSelector({ file, uploadProgress, onUpload, onCancel }: Pd
           console.error(`[PdfPageSelector] page ${i} failed to render:`, err);
           pages.push(null);
           failed.add(i);
+          // Surfaced in the UI too (not just the console) — the exact reason
+          // varies a lot page to page (an unsupported font, an odd color
+          // space, a malformed image stream), so a generic "unsupported
+          // content" banner previously hid the one detail actually needed to
+          // diagnose it without reopening dev tools.
+          reasons.set(i, err instanceof Error ? `${err.name}: ${err.message}` : String(err));
         }
       }
       if (cancelled) return;
       setThumbnails(pages);
       setFailedPages(failed);
+      setFailureReasons(reasons);
       // Pages that failed to render can't be converted to an image either — leave them unselected.
       setSelected(new Set(Array.from({ length: pdf.numPages }, (_, i) => i + 1).filter((n) => !failed.has(n))));
     })();
@@ -243,10 +252,21 @@ export function PdfPageSelector({ file, uploadProgress, onUpload, onCancel }: Pd
           </div>
 
           {failedPages.size > 0 && (
-            <p className="text-xs text-amber-400">
-              Page{failedPages.size > 1 ? "s" : ""} {Array.from(failedPages).sort((a, b) => a - b).join(", ")}{" "}
-              couldn't be previewed (unsupported content) and {failedPages.size > 1 ? "are" : "is"} excluded.
-            </p>
+            <div className="space-y-1 text-xs text-amber-400">
+              <p>
+                Page{failedPages.size > 1 ? "s" : ""} {Array.from(failedPages).sort((a, b) => a - b).join(", ")}{" "}
+                couldn't be previewed and {failedPages.size > 1 ? "are" : "is"} excluded:
+              </p>
+              <ul className="list-inside list-disc space-y-0.5 text-amber-400/80">
+                {Array.from(failureReasons.entries())
+                  .sort(([a], [b]) => a - b)
+                  .map(([n, reason]) => (
+                    <li key={n} className="break-all">
+                      Page {n}: {reason}
+                    </li>
+                  ))}
+              </ul>
+            </div>
           )}
 
           <div className="grid max-h-72 grid-cols-4 gap-2 overflow-y-auto sm:grid-cols-6">
