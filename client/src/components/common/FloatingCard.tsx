@@ -120,11 +120,22 @@ export function FloatingCard({
   // the fixed text floor. Desktop's formula (the else branch) is exactly what
   // it was before mobile existed.
   const baseWidth = isMobile ? Math.round(44 + card.depth * 44) : Math.round(90 + card.depth * 90);
-  // Mobile only: 40% bigger overall, but anchored so the TOP edge stays exactly
-  // where the un-enlarged card's top edge would have been — see the marginTop
+  // Mobile only: bigger overall, anchored so the TOP edge stays exactly where
+  // the un-enlarged card's top edge would have been — see the marginTop
   // comment below for how that's achieved. Desktop is untouched (mobileScale
   // is a no-op there).
-  const mobileScale = 1.4;
+  //
+  // A 40% increase was requested first; empirically, that reopened real,
+  // persistent text overlap (not just a fade-phase exception — confirmed at
+  // Hero scroll=0, full opacity, ~31px into the title). ARC_MOBILE's cy=55
+  // band already sits at the tightest margin to the text that zero-overlap
+  // allows for the current (un-enlarged) card size, so growing downward from
+  // there has very little room to spend before hitting the text. Walked the
+  // scale back (1.4 -> 1.2 -> 1.1 -> 1.05 -> 1.03 -> 1.02) via the same real
+  // getBoundingClientRect() sweep used throughout — 1.02 is the largest value
+  // that still holds TEXT_OVERLAPS=0 at all 28 Hero/Closing checkpoints;
+  // 1.025 already fails one. A ~2% size increase is what geometrically fits.
+  const mobileScale = 1.02;
   const width = isMobile ? Math.round(baseWidth * mobileScale) : baseWidth;
   const baseHeight = Math.round(baseWidth * heightFactor);
 
