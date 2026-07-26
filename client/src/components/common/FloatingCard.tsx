@@ -113,16 +113,14 @@ export function FloatingCard({
   // Any known image size dictates the card's aspect; otherwise the slot preset does.
   const size = imageSize ?? measuredSize;
   const heightFactor = size ? size.height / size.width : HEIGHT_FACTOR[card.aspect];
-  // Mobile's own, separate size range. The prior round's window (bounded
-  // above AND below by the user's two marked lines, ~35px tall) forced an
-  // impractically tiny 11+depth*11. Dropping the lower bound in favor of the
-  // title text's fixed position instead (see ARC_MOBILE's comment) reopened
-  // enough room to grow this back up — found empirically (not the requested
-  // 88+depth*88, which is still categorically too tall for the reopened
-  // ~66px window; this is the largest size that keeps zero text overlap
-  // across every scroll checkpoint). Desktop's formula (the else branch) is
-  // exactly what it was before mobile existed.
-  const width = isMobile ? Math.round(20 + card.depth * 20) : Math.round(90 + card.depth * 90);
+  // Mobile's own, separate size range — chosen by eye for a size that reads
+  // clearly on a phone-width screen (not a tiny unreadable dot, not big
+  // enough to dominate the scene), rather than derived from an exact pixel
+  // budget. Verified against the one non-negotiable rule (zero overlap with
+  // the title/subtitle text) via getBoundingClientRect() across the full
+  // scroll range. Desktop's formula (the else branch) is exactly what it was
+  // before mobile existed.
+  const width = isMobile ? Math.round(55 + card.depth * 55) : Math.round(90 + card.depth * 90);
   const height = Math.round(width * heightFactor);
 
   // Layering against the portrait (z-20): near cards (depth ≥ 0.6) float in front of it,

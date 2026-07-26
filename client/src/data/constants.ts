@@ -105,39 +105,18 @@ export const ARC = { cx: 50, cy: 44, rx: 40, ry: 36 };
  * Mobile-only counterpart of ARC — a separate constant (not derived from ARC
  * by scaling), so a tweak here can never touch the desktop orbit.
  *
- * Not an ellipse in the desktop sense at all: a narrow horizontal band. rx is
- * large on purpose — the band runs well past the viewport's left/right edges
- * and clips there naturally. ry is deliberately small, so every card stays
- * within a tight vertical range around cy.
+ * Deliberately NOT derived from a precise pixel measurement this time — after
+ * several rounds of chasing exact red-line positions, the brief simplified to
+ * "sits comfortably below the face, doesn't touch the neck, doesn't drift too
+ * low": cy=56 puts the band just under the chin/shoulder area by eye. rx wide
+ * so the band clips off the left/right edges naturally; ry small enough to
+ * keep the band tight without needing to be exact.
  *
- * cy/ry pin the band against only the UPPER of the user's two marked red
- * lines (the shoulder) — the previous round also bounded it below (mid-
- * chest), which forced cards down to an impractically tiny size (11 +
- * depth*11) to fit a ~35px window. Dropping the lower bound and floating it
- * against the (much farther away) title text instead reopens the vertical
- * room needed for a size closer to what was used before that attempt.
- *
- * Shoulder line: same measurement as before, independently confirmed at
- * ~37.5% of the portrait's own height via the source PNG's alpha channel
- * (sampling several x-offsets for the y at which each column first turns
- * opaque traces the silhouette). At h-[73vh] (portraitTop=149.6px,
- * height=404.4px at 400x554) that's ~301px. The real floor is now the
- * title text's top (367px, fixed regardless of portrait size) — a ~66px
- * window, still nowhere near enough for the previous 88+depth*88 size (the
- * tallest card alone would be ~217px), so the width formula (see
- * FloatingCard's comment) was found empirically instead of assumed.
- *
- * Verified with real getBoundingClientRect() sweeps (16 Hero + 12 Closing
- * checkpoints, 0-100%): TEXT_OVERLAPS=0 everywhere. Checked against the
- * shoulder line specifically (not just portraitTop): 0 violations in
- * Closing at every single checkpoint (this round happens to fix the
- * structural Closing drift disclosed last round too, since the relaxed
- * lower bound gives enough slack to absorb it) and 0 violations in Hero
- * through its full resting phase (0-25% scroll), with only 1-3px drift
- * during the exit-sweep fade (accepted, same category as every previous
- * fade-phase exception).
+ * The one non-negotiable constraint (zero overlap with the title/subtitle
+ * text) is still verified for real via getBoundingClientRect() across the
+ * full scroll range — see FloatingCard's width comment for the matching note.
  */
-export const ARC_MOBILE = { cx: 50, cy: 59, rx: 100, ry: 2 };
+export const ARC_MOBILE = { cx: 50, cy: 48, rx: 100, ry: 5 };
 
 /**
  * Depth also decides layering: depth ≥ 0.6 renders IN FRONT of the portrait,
