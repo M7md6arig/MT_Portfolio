@@ -119,8 +119,14 @@ export function FloatingCard({
   // this formula) ended up being the constraint that got walked back to fit
   // the fixed text floor. Desktop's formula (the else branch) is exactly what
   // it was before mobile existed.
-  const width = isMobile ? Math.round(44 + card.depth * 44) : Math.round(90 + card.depth * 90);
-  const height = Math.round(width * heightFactor);
+  const baseWidth = isMobile ? Math.round(44 + card.depth * 44) : Math.round(90 + card.depth * 90);
+  // Mobile only: 40% bigger overall, but anchored so the TOP edge stays exactly
+  // where the un-enlarged card's top edge would have been — see the marginTop
+  // comment below for how that's achieved. Desktop is untouched (mobileScale
+  // is a no-op there).
+  const mobileScale = 1.4;
+  const width = isMobile ? Math.round(baseWidth * mobileScale) : baseWidth;
+  const baseHeight = Math.round(baseWidth * heightFactor);
 
   // Layering against the portrait (z-20): near cards (depth ≥ 0.6) float in front of it,
   // far cards sit behind the body and get partially hidden at visual intersections.
@@ -138,7 +144,14 @@ export function FloatingCard({
         opacity,
         width,
         marginLeft: -width / 2,
-        marginTop: -height / 2,
+        // Anchored on baseHeight (the pre-enlargement height), not the actual
+        // (bigger) height: the "top" position value is the card's arc-derived
+        // center point, and marginTop shifts the box up by half its height to
+        // center it there. Using the OLD half-height keeps that shift exactly
+        // what it was before the 40% mobile enlargement, so the top edge lands
+        // at the same screen position as before — all of the size increase
+        // extends the box downward from there instead of growing symmetrically.
+        marginTop: -baseHeight / 2,
         rotate: card.rotate,
         zIndex,
       }}
