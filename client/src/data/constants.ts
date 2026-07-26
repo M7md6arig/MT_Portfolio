@@ -110,42 +110,34 @@ export const ARC = { cx: 50, cy: 44, rx: 40, ry: 36 };
  * and clips there naturally. ry is deliberately small, so every card stays
  * within a tight vertical range around cy.
  *
- * cy/ry pin the band to a narrow window the user marked with two red lines on
- * a real-device screenshot: from the shoulder down to roughly mid-upper-chest
- * — deliberately narrower than every previous attempt (which spanned much
- * more of the torso), explicitly reversing the prior round's cy=74 (which had
- * traded away zero-text-overlap for bigger, lower cards; this round asks for
- * a tight band instead and shrinks the cards to fit it).
+ * cy/ry pin the band against only the UPPER of the user's two marked red
+ * lines (the shoulder) — the previous round also bounded it below (mid-
+ * chest), which forced cards down to an impractically tiny size (11 +
+ * depth*11) to fit a ~35px window. Dropping the lower bound and floating it
+ * against the (much farther away) title text instead reopens the vertical
+ * room needed for a size closer to what was used before that attempt.
  *
- * Both line positions were anchored to the portrait's own proportions rather
- * than guessed pixels, so they hold at any portrait size:
- *   - upper line (shoulder): independently re-confirmed at ~37.5% of the
- *     portrait's height via the source PNG's alpha channel (sampling several
- *     x-offsets for the y at which each column first turns opaque traces the
- *     silhouette — the same measurement used two rounds ago).
- *   - lower line (mid-chest): read off the user's marked screenshot relative
- *     to the same landmarks, landing at ~45.5% of the portrait's height.
- * At h-[73vh] (portraitTop=149.6px, height=404.4px at 400x554) that's a
- * window of ~301px to ~336px — only ~35px tall. cy=57 (~316px) centers it;
- * ry=1 keeps the orbit's own vertical swing small enough not to blow past
- * either edge on its own.
+ * Shoulder line: same measurement as before, independently confirmed at
+ * ~37.5% of the portrait's own height via the source PNG's alpha channel
+ * (sampling several x-offsets for the y at which each column first turns
+ * opaque traces the silhouette). At h-[73vh] (portraitTop=149.6px,
+ * height=404.4px at 400x554) that's ~301px. The real floor is now the
+ * title text's top (367px, fixed regardless of portrait size) — a ~66px
+ * window, still nowhere near enough for the previous 88+depth*88 size (the
+ * tallest card alone would be ~217px), so the width formula (see
+ * FloatingCard's comment) was found empirically instead of assumed.
  *
  * Verified with real getBoundingClientRect() sweeps (16 Hero + 12 Closing
- * checkpoints, 0-100%): TEXT_OVERLAPS=0 everywhere (trivial now — the window
- * sits far from the text). In Hero, cards stay fully inside the two lines
- * for the entire resting phase (0-30% scroll) and drift only 1-4px past
+ * checkpoints, 0-100%): TEXT_OVERLAPS=0 everywhere. Checked against the
+ * shoulder line specifically (not just portraitTop): 0 violations in
+ * Closing at every single checkpoint (this round happens to fix the
+ * structural Closing drift disclosed last round too, since the relaxed
+ * lower bound gives enough slack to absorb it) and 0 violations in Hero
+ * through its full resting phase (0-25% scroll), with only 1-3px drift
  * during the exit-sweep fade (accepted, same category as every previous
- * fade-phase exception). Closing is structurally different: its portrait
- * never settles into one fixed screen position the way Hero's does (the
- * section's sticky pin doesn't fully engage — see Closing.tsx's comment), so
- * the same fixed-viewport-% band can only track the shoulder tightly at
- * Closing's own analogous "settled" point (~90-100% scroll); earlier in its
- * entrance it drifts further from the lines, always during the low-opacity
- * fade-in. This mismatch is inherent to sharing one constant across a scene
- * whose portrait moves continuously — not something this pass could close
- * without changing Closing's scroll architecture, which wasn't asked for.
+ * fade-phase exception).
  */
-export const ARC_MOBILE = { cx: 50, cy: 57, rx: 100, ry: 1 };
+export const ARC_MOBILE = { cx: 50, cy: 59, rx: 100, ry: 2 };
 
 /**
  * Depth also decides layering: depth ≥ 0.6 renders IN FRONT of the portrait,

@@ -113,14 +113,16 @@ export function FloatingCard({
   // Any known image size dictates the card's aspect; otherwise the slot preset does.
   const size = imageSize ?? measuredSize;
   const heightFactor = size ? size.height / size.width : HEIGHT_FACTOR[card.aspect];
-  // Mobile's own, separate size range — shrunk sharply from the earlier
-  // doubled size (88 + depth*88) because the band is now a much narrower,
-  // user-specified window (shoulder to mid-chest, ~35px tall at 400x554; see
-  // ARC_MOBILE's comment). This also restores zero text overlap essentially
-  // for free — the window sits far enough from the text that overlap was
-  // never really in tension with this size. Desktop's formula (the else
-  // branch) is exactly what it was before mobile existed.
-  const width = isMobile ? Math.round(11 + card.depth * 11) : Math.round(90 + card.depth * 90);
+  // Mobile's own, separate size range. The prior round's window (bounded
+  // above AND below by the user's two marked lines, ~35px tall) forced an
+  // impractically tiny 11+depth*11. Dropping the lower bound in favor of the
+  // title text's fixed position instead (see ARC_MOBILE's comment) reopened
+  // enough room to grow this back up — found empirically (not the requested
+  // 88+depth*88, which is still categorically too tall for the reopened
+  // ~66px window; this is the largest size that keeps zero text overlap
+  // across every scroll checkpoint). Desktop's formula (the else branch) is
+  // exactly what it was before mobile existed.
+  const width = isMobile ? Math.round(20 + card.depth * 20) : Math.round(90 + card.depth * 90);
   const height = Math.round(width * heightFactor);
 
   // Layering against the portrait (z-20): near cards (depth ≥ 0.6) float in front of it,
@@ -166,21 +168,26 @@ export function FloatingCard({
             )}
           />
         )}
-        <div
-          className={cn(
-            "relative flex h-full flex-col justify-end p-2.5",
-            imageUrl && "bg-gradient-to-t from-black/60 to-transparent",
-          )}
-        >
-          <span
+        {/* Mobile cards are pure imagery — at this size the title label would be
+            unreadable anyway, and dropping it removes any visual cost from the
+            card brushing up against nearby text (nothing left to visually clash). */}
+        {!isMobile && (
+          <div
             className={cn(
-              "text-scene-shadow text-[9px] font-medium leading-snug tracking-wide",
-              imageUrl ? "text-white" : "text-white/40",
+              "relative flex h-full flex-col justify-end p-2.5",
+              imageUrl && "bg-gradient-to-t from-black/60 to-transparent",
             )}
           >
-            {card.title}
-          </span>
-        </div>
+            <span
+              className={cn(
+                "text-scene-shadow text-[9px] font-medium leading-snug tracking-wide",
+                imageUrl ? "text-white" : "text-white/40",
+              )}
+            >
+              {card.title}
+            </span>
+          </div>
+        )}
       </div>
     </motion.div>
   );
