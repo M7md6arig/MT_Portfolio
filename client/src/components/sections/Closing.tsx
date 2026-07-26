@@ -66,7 +66,7 @@ export function Closing() {
 
         <motion.div
           style={{ opacity: textOpacity, y: textY }}
-          className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-2 px-6 pb-2 text-center sm:bottom-14 sm:gap-4 sm:pb-0"
+          className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-1 px-6 pb-1 text-center sm:bottom-14 sm:gap-4 sm:pb-0"
         >
           <span className="text-xs uppercase tracking-[0.3em] text-accent">
             {CLOSING_COPY.eyebrow}
@@ -75,7 +75,7 @@ export function Closing() {
             {CLOSING_COPY.title}
           </h2>
           <p className="text-scene-shadow max-w-md text-sm text-neutral-200">{CLOSING_COPY.text}</p>
-          <Button href="#contact" variant="glass" className="mt-2">
+          <Button href="#contact" variant="glass" className="mt-1 sm:mt-2">
             {CLOSING_COPY.cta}
           </Button>
         </motion.div>

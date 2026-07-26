@@ -75,13 +75,13 @@ export function Hero() {
 
         <motion.div
           style={{ opacity: titleOpacity }}
-          className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 px-6 pb-2 text-center sm:bottom-14 sm:pb-0"
+          className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-2 px-6 pb-1 text-center sm:bottom-14 sm:gap-3 sm:pb-0"
         >
           <h1 className="text-scene-shadow font-display text-3xl font-bold text-white sm:text-5xl">
             {HERO_COPY.title}
           </h1>
           <p className="text-scene-shadow max-w-md text-sm text-neutral-200">{HERO_COPY.subtitle}</p>
-          <div className="mt-4 flex flex-col items-center gap-2">
+          <div className="mt-0 flex flex-col items-center gap-2 sm:mt-4">
             <span className="text-scene-shadow text-[10px] uppercase tracking-[0.3em] text-neutral-300">
               {HERO_COPY.scrollHint}
             </span>

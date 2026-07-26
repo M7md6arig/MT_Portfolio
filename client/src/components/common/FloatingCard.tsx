@@ -51,17 +51,6 @@ const EXIT_RADIUS = 1.7;
 const ORBIT_PHASE_END = 0.7;
 const ENTER_SETTLE_AT = 0.3;
 
-/**
- * Mobile-only: how close to the orbit's horizontal center (in the same
- * viewport-% units as ARC_MOBILE.rx) a card has to be before it's treated as
- * "passing over the face" and pushed behind the portrait instead of in front.
- * Sized to clear the face itself (roughly ±14% of viewport width around
- * center, measured off the portrait's own silhouette) plus half a card's own
- * width at the current mobile size, so the card's edge — not just its
- * center point — clears the face.
- */
-const MOBILE_FACE_ZONE_PCT = 26;
-
 const toRadians = (deg: number) => (deg * Math.PI) / 180;
 
 export function FloatingCard({
@@ -135,24 +124,11 @@ export function FloatingCard({
 
   // Layering against the portrait (z-20): near cards (depth ≥ 0.6) float in front of it,
   // far cards sit behind the body and get partially hidden at visual intersections.
-  //
-  // Mobile can't just always use this rule: at this card size, one whose angle
-  // sweep carries it through the orbit's horizontal center — directly over the
-  // face — would fully cover it while "in front". But always rendering mobile
-  // cards behind the portrait (an earlier attempt) made the cards passing
-  // beside the head look washed out, since they'd dim behind the portrait's
-  // shadow even when clear of the face. So it's neither always-front nor
-  // always-behind: only cards currently near dead-center (over the face) drop
-  // behind; cards out at the sides keep the normal desktop-style front/back
-  // rule. This has to be scroll-reactive (a MotionValue), since a card's
-  // horizontal position changes continuously as it orbits.
-  const backgroundZIndex = Math.round(6 + card.depth * 12);
-  const desktopStyleZIndex = card.depth >= 0.6 ? 25 : backgroundZIndex;
-  const mobileZIndex = useTransform(() => {
-    const horizontalOffset = Math.abs(arc.rx * radius.get() * Math.cos(toRadians(angle.get())));
-    return horizontalOffset < MOBILE_FACE_ZONE_PCT ? backgroundZIndex : desktopStyleZIndex;
-  });
-  const zIndex = isMobile ? mobileZIndex : desktopStyleZIndex;
+  // Same rule on mobile as desktop, no exceptions — cards orbit the person
+  // naturally, some in front and some behind depending on depth, exactly like
+  // desktop. Keeping any card from fully covering the face is handled by
+  // ARC_MOBILE's own geometry (see its comment), not by this rule.
+  const zIndex = card.depth >= 0.6 ? 25 : Math.round(6 + card.depth * 12);
 
   return (
     <motion.div
@@ -190,21 +166,26 @@ export function FloatingCard({
             )}
           />
         )}
-        <div
-          className={cn(
-            "relative flex h-full flex-col justify-end p-2.5",
-            imageUrl && "bg-gradient-to-t from-black/60 to-transparent",
-          )}
-        >
-          <span
+        {/* Mobile cards are pure imagery — no title label, no gradient behind it
+            (the gradient existed only to keep that label readable). Desktop is
+            unchanged: label and gradient still render there via !isMobile. */}
+        {!isMobile && (
+          <div
             className={cn(
-              "text-scene-shadow text-[9px] font-medium leading-snug tracking-wide",
-              imageUrl ? "text-white" : "text-white/40",
+              "relative flex h-full flex-col justify-end p-2.5",
+              imageUrl && "bg-gradient-to-t from-black/60 to-transparent",
             )}
           >
-            {card.title}
-          </span>
-        </div>
+            <span
+              className={cn(
+                "text-scene-shadow text-[9px] font-medium leading-snug tracking-wide",
+                imageUrl ? "text-white" : "text-white/40",
+              )}
+            >
+              {card.title}
+            </span>
+          </div>
+        )}
       </div>
     </motion.div>
   );

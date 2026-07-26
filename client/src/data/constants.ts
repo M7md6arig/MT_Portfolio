@@ -110,23 +110,27 @@ export const ARC = { cx: 50, cy: 44, rx: 40, ry: 36 };
  * and clips there naturally. ry is deliberately small, so every card stays
  * within a tight vertical range around cy.
  *
- * cy was asked to sit at the portrait's chest level (matching desktop, where
- * foreground cards render in front of the person, not tucked behind) rather
- * than up near the ceiling. Measured for real at 400x554 with the h-[73vh]
- * portrait: chest/upper-torso is roughly 45-50% down the portrait's own
- * height, landing around cy=63 in viewport %. That value alone reintroduced
- * text overlap (the fixed floor is the title text's top at 367px, unrelated
- * to portrait size, and a true chest-height band sits too close to it once
- * cards are full-sized) — text readability still outranks exact chest
- * placement (same priority call as every earlier round), so cy was walked
- * back up (63 -> 55 -> 50) until the real getBoundingClientRect() sweep
- * (16 Hero + 12 Closing checkpoints, 0-100%) showed zero text overlap at
- * every one. cy=50 lands at the upper-chest/collar area — visibly lower
- * than the previous head-height band, just not literally mid-chest.
+ * This is the 6670217 baseline (cy was 50 there), nudged down slightly to
+ * cy=55 for one specific reason: with the plain depth-based front/behind
+ * rule restored (see FloatingCard's zIndex — no mobile-specific layering
+ * logic anymore), a foreground card sweeping through the orbit's horizontal
+ * center sits directly over whatever is at cy's height. At cy=50 that was
+ * still high enough to fully cover the chin/mouth during that crossing
+ * (confirmed via screenshot); cy=55 clears the chin, leaving only the
+ * neck/collar area in the crossing card's path — verified visually, not
+ * just by the numbers.
+ *
+ * Moving cy down reopened ~18px of text overlap (the fixed floor is the
+ * title text's top, unrelated to portrait size). Per this round's explicit
+ * instruction, that gap was closed by tightening the mobile-only text block
+ * spacing instead of touching card size or the layering rule (see
+ * Hero.tsx/Closing.tsx — bare gap/margin/padding classes only, every sm:
+ * value is untouched). Re-verified via getBoundingClientRect() sweeps (16
+ * Hero + 12 Closing checkpoints, 0-100%): TEXT_OVERLAPS=0 at every one.
  * Ceiling violations remain at a handful of checkpoints, but only during the
  * already-accepted low-opacity exit/entrance fade, never at rest.
  */
-export const ARC_MOBILE = { cx: 50, cy: 50, rx: 100, ry: 6 };
+export const ARC_MOBILE = { cx: 50, cy: 55, rx: 100, ry: 6 };
 
 /**
  * Depth also decides layering: depth ≥ 0.6 renders IN FRONT of the portrait,
