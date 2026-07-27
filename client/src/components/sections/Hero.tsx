@@ -85,11 +85,11 @@ export function Hero() {
             <span className="text-scene-shadow text-[10px] uppercase tracking-[0.3em] text-neutral-300">
               {HERO_COPY.scrollHint}
             </span>
-            <div className="h-10 w-6 rounded-full border border-line p-1">
+            <div className="glass h-11 w-7 rounded-full p-1.5">
               <motion.div
-                animate={{ y: [0, 14, 0] }}
+                animate={{ y: [0, 16, 0], scale: [1, 1.15, 1] }}
                 transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
-                className="h-2 w-2 rounded-full bg-accent"
+                className="mx-auto h-1.5 w-1.5 rounded-full bg-accent shadow-glow-soft"
               />
             </div>
           </div>
