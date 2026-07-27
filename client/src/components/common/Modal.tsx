@@ -7,14 +7,19 @@ interface ModalProps {
   onClose: () => void;
   label?: string;
   children: ReactNode;
+  /** Suppresses this modal's own Escape-to-close while something layered on
+   * top of it (e.g. a lightbox) is handling Escape itself — without this, both
+   * layers would react to the same keypress and the whole modal would close
+   * instead of just the layer on top of it. */
+  disableEscapeClose?: boolean;
 }
 
-export function Modal({ open, onClose, label = "Dialog", children }: ModalProps) {
+export function Modal({ open, onClose, label = "Dialog", children, disableEscapeClose = false }: ModalProps) {
   useEffect(() => {
     if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !disableEscapeClose) onClose();
     };
 
     document.addEventListener("keydown", onKeyDown);
@@ -23,7 +28,7 @@ export function Modal({ open, onClose, label = "Dialog", children }: ModalProps)
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = "";
     };
-  }, [open, onClose]);
+  }, [open, onClose, disableEscapeClose]);
 
   return (
     <AnimatePresence>

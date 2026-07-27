@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Button } from "@/components/common/Button";
 import { LazyImage } from "@/components/common/LazyImage";
 import { Modal } from "@/components/common/Modal";
@@ -7,6 +7,10 @@ import { CATEGORY_GRADIENTS, CATEGORY_LABELS } from "@/data/constants";
 import type { Project } from "@/types";
 import { cloudinaryUrl, videoThumbnailUrl } from "@/utils/cloudinary";
 import { cn } from "@/utils/cn";
+
+// Dynamically imported: the library and its CSS only load once a visitor
+// actually clicks the main image, not with the rest of the app bundle.
+const ProjectLightbox = lazy(() => import("@/components/common/ProjectLightbox"));
 
 interface ProjectModalProps {
   project: Project | null;
@@ -17,10 +21,12 @@ interface ProjectModalProps {
 export function ProjectModal({ project, onClose }: ProjectModalProps) {
   const [playing, setPlaying] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     setPlaying(false);
     setActiveImage(0);
+    setLightboxOpen(false);
   }, [project?.id]);
 
   const isPlayable =
@@ -43,8 +49,10 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
   }
 
   // Arrow-key navigation while the dialog is open (Escape is handled by Modal itself).
+  // Suppressed while the lightbox is open — it has its own arrow-key handling,
+  // and both firing on the same keypress would advance two images at once.
   useEffect(() => {
-    if (!project || gallery.length < 2) return;
+    if (!project || gallery.length < 2 || lightboxOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "ArrowRight") navigate(1);
       if (event.key === "ArrowLeft") navigate(-1);
@@ -52,10 +60,22 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project?.id, gallery.length]);
+  }, [project?.id, gallery.length, lightboxOpen]);
+
+  const lightboxSlides =
+    gallery.length > 0
+      ? gallery.map((image) => ({ src: cloudinaryUrl(image.url, 1920), alt: project?.title ?? "" }))
+      : mainImage
+        ? [{ src: mainImage, alt: project?.title ?? "" }]
+        : [];
 
   return (
-    <Modal open={project !== null} onClose={onClose} label={project?.title ?? "Project details"}>
+    <Modal
+      open={project !== null}
+      onClose={onClose}
+      label={project?.title ?? "Project details"}
+      disableEscapeClose={lightboxOpen}
+    >
       {project && (
         <div>
           <div className="relative">
@@ -70,16 +90,34 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
               <>
                 {/* night backdrop letterboxes portrait/landscape images shown uncropped;
                     the padding gives the image breathing room instead of touching the edges */}
-                <div className="bg-night p-4 sm:p-6">
-                  <LazyImage
-                    key={mainImage ?? "fallback"}
-                    src={mainImage}
-                    alt={project.title}
-                    fit="contain"
-                    className="aspect-video w-full"
-                    fallbackClassName={CATEGORY_GRADIENTS[project.category]}
-                  />
-                </div>
+                {!isPlayable && mainImage ? (
+                  <button
+                    type="button"
+                    onClick={() => setLightboxOpen(true)}
+                    aria-label={`Open ${project.title} image fullscreen`}
+                    className="block w-full cursor-zoom-in bg-night p-4 sm:p-6"
+                  >
+                    <LazyImage
+                      key={mainImage ?? "fallback"}
+                      src={mainImage}
+                      alt={project.title}
+                      fit="contain"
+                      className="aspect-video w-full"
+                      fallbackClassName={CATEGORY_GRADIENTS[project.category]}
+                    />
+                  </button>
+                ) : (
+                  <div className="bg-night p-4 sm:p-6">
+                    <LazyImage
+                      key={mainImage ?? "fallback"}
+                      src={mainImage}
+                      alt={project.title}
+                      fit="contain"
+                      className="aspect-video w-full"
+                      fallbackClassName={CATEGORY_GRADIENTS[project.category]}
+                    />
+                  </div>
+                )}
 
                 {gallery.length > 1 && (
                   <>
@@ -178,6 +216,18 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
             )}
           </div>
         </div>
+      )}
+
+      {lightboxOpen && (
+        <Suspense fallback={null}>
+          <ProjectLightbox
+            slides={lightboxSlides}
+            index={activeImage}
+            open={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+            onIndexChange={setActiveImage}
+          />
+        </Suspense>
       )}
     </Modal>
   );

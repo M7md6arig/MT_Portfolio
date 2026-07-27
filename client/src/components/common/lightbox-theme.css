@@ -1,0 +1,40 @@
+/* Restyles yet-another-react-lightbox to match the site's own glass/night/gold
+   language, using the same --color-* CSS variables the rest of the site reads
+   (utils/theme.ts overrides these at runtime from the admin Appearance tab) —
+   loaded only when the lightbox itself is, alongside the library's own CSS. */
+
+.yarl__container {
+  background-color: rgb(var(--color-primary) / 0.92);
+  backdrop-filter: blur(16px);
+}
+
+.yarl__button {
+  margin: 6px;
+  padding: 10px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 9999px;
+  background-color: rgb(255 255 255 / 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  filter: none;
+}
+
+.yarl__button:hover,
+.yarl__button:focus-visible {
+  color: rgb(var(--color-accent));
+}
+
+.yarl__navigation_prev,
+.yarl__navigation_next {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.yarl__icon {
+  width: 20px;
+  height: 20px;
+}
+
+.yarl__slide_loading {
+  color: rgb(var(--color-accent) / 0.8);
+}
