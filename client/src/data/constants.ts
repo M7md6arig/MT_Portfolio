@@ -37,11 +37,11 @@ export const TRANSITION_COPY = "Every frame tells a story. Step inside the studi
 
 export const ABOUT = {
   title: "Design with a director's eye",
-  bio: "I'm an art director who thinks in scenes: every poster, motion piece and interface starts with a mood, a light source and a reason to look. For the past years I've helped brands and filmmakers find the single frame that says everything.",
+  bio: "I'm an Art Director who thinks in scenes: every brand identity, motion piece, and campaign starts with a mood, a structure, and a reason to look. Over 14+ years — from founding and scaling a full-service creative agency in Sudan to directing brand identity for a Saudi retail brand today — I've helped organizations across healthcare, government, FMCG, and civil society find the single visual language that says everything.",
   stats: [
-    { value: "13+", label: "Years of Experience" },
-    { value: "200+", label: "Project Delivered" },
+    { value: "14+", label: "Years of Experience" },
     { value: "80+", label: "Brands Served" },
+    { value: "10", label: "Creative Team Members Led" },
   ] satisfies Stat[],
 };
 
