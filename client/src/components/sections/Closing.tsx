@@ -68,7 +68,7 @@ export function Closing() {
           style={{ opacity: textOpacity, y: textY }}
           className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-1 px-6 pb-1 text-center sm:bottom-14 sm:gap-4 sm:pb-0"
         >
-          <span className="text-xs uppercase tracking-[0.3em] text-accent">
+          <span className="text-scene-shadow text-xs uppercase tracking-[0.3em] text-accent">
             {CLOSING_COPY.eyebrow}
           </span>
           <h2 className="text-scene-shadow font-display text-3xl font-bold text-white sm:text-4xl">
