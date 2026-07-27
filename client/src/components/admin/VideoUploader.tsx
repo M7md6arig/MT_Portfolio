@@ -31,6 +31,7 @@ export function VideoUploader({ projectId, videoUrl, onChange }: VideoUploaderPr
   const [error, setError] = useState<string | null>(null);
 
   async function uploadFile(file: File) {
+    if (uploading) return;
     if (!isAllowedVideo(file) || file.size > MAX_BYTES) {
       setError("Only mp4, webm and mov videos up to 50MB are allowed.");
       return;
@@ -76,50 +77,73 @@ export function VideoUploader({ projectId, videoUrl, onChange }: VideoUploaderPr
 
   return (
     <div className="space-y-2">
-      {videoUrl ? (
-        <div className="space-y-2">
-          <video src={videoUrl} controls className="w-full rounded-xl border border-line bg-night" />
-          <button
-            type="button"
-            onClick={() => void onRemove()}
-            className="text-xs text-neutral-500 underline-offset-2 transition-colors hover:text-red-400 hover:underline"
-          >
-            Remove video
-          </button>
-        </div>
-      ) : (
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={(e) => {
-            // The Field wrapper renders a native <label>; since this div isn't itself
-            // a form control, a plain click also triggers the label's own default
-            // action of activating the first labelable descendant (this hidden file
-            // input) — doubling up with the explicit .click() below and opening the
-            // OS file picker twice per click. preventDefault() suppresses that.
-            e.preventDefault();
-            e.stopPropagation();
-            inputRef.current?.click();
-          }}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={onDrop}
-          className={cn(
-            "flex w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed px-4 py-6 text-center transition-colors",
-            dragOver ? "border-accent bg-accent/10" : "border-line bg-night/40 hover:border-accent/60",
-          )}
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={onDrop}
+        // Only wire up click-to-upload on the empty state — once a video exists,
+        // native <video controls> (play, scrub) live in this same area and must
+        // keep receiving clicks; replacing then goes through the explicit button.
+        onClick={
+          videoUrl
+            ? undefined
+            : (e) => {
+                // The Field wrapper renders a native <label>; since this div isn't itself
+                // a form control, a plain click also triggers the label's own default
+                // action of activating the first labelable descendant (this hidden file
+                // input) — doubling up with the explicit .click() below and opening the
+                // OS file picker twice per click. preventDefault() suppresses that.
+                e.preventDefault();
+                e.stopPropagation();
+                inputRef.current?.click();
+              }
+        }
+        role={videoUrl ? undefined : "button"}
+        tabIndex={videoUrl ? undefined : 0}
+        className={cn(
+          "relative w-full overflow-hidden rounded-xl border border-dashed transition-colors",
+          videoUrl ? "" : "cursor-pointer",
+          dragOver ? "border-accent bg-accent/10" : "border-line bg-night/40 hover:border-accent/60",
+        )}
+      >
+        {videoUrl ? (
+          <>
+            <video src={videoUrl} controls className="w-full rounded-xl bg-night" />
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => inputRef.current?.click()}
+              className="absolute right-2 top-2 rounded-lg bg-black/70 px-3 py-1.5 text-xs text-white backdrop-blur-sm transition-colors hover:bg-black/90 hover:text-accent disabled:opacity-60"
+            >
+              {uploading ? "Uploading…" : "Replace video"}
+            </button>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-1 px-4 py-6 text-center">
+            <span className="text-sm text-neutral-300">
+              {uploading ? "Uploading video…" : "Upload video"}
+            </span>
+            <span className="text-xs text-neutral-500">
+              Click or drag & drop — mp4 / webm / mov, max 50MB
+            </span>
+          </div>
+        )}
+      </div>
+
+      {videoUrl && (
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => void onRemove()}
+          className="text-xs text-neutral-500 underline-offset-2 transition-colors hover:text-red-400 hover:underline disabled:opacity-60"
         >
-          <span className="text-sm text-neutral-300">
-            {uploading ? "Uploading video…" : "Upload video"}
-          </span>
-          <span className="text-xs text-neutral-500">
-            Click or drag & drop — mp4 / webm / mov, max 50MB
-          </span>
-        </div>
+          Remove video
+        </button>
       )}
+
       <input
         ref={inputRef}
         type="file"
